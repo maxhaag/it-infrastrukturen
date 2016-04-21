@@ -9,20 +9,20 @@ package de.maxflo.it.infrastruktur.vergleich.archimate;
  *
  * @author Max
  */
-public class Relations {
+public class Figure {
+    
     
     private String type;
     private String id;
     private String name;
-    private String source;
-    private String target;
 
-    public Relations(String type, String id, String name, String source, String target) {
+    public Figure(String type, String id, String name) {
         this.type = type;
         this.id = id;
         this.name = name;
-        this.source = source;
-        this.target = target;
+    }
+
+    public Figure() {
     }
 
     public String getType() {
@@ -48,22 +48,8 @@ public class Relations {
     public void setName(String name) {
         this.name = name;
     }
-
-    public String getSource() {
-        return source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
-    }
-
-    public String getTarget() {
-        return target;
-    }
-
-    public void setTarget(String target) {
-        this.target = target;
-    }
+    
+    
     
     
     
