@@ -19,14 +19,13 @@ public class XMLFileReader {
 
 
     
-    
     ArrayList<String> refDoc = new ArrayList<>();
     ArrayList<String> instDoc = new ArrayList<>();
     
-    //ArrayList<Figures> refFig = new ArrayList<>();
-    //ArrayList<Figures> instFig = new ArrayList<>();
-    //ArrayList<Relations> refRel = new ArrayList<>();
-    //ArrayList<Relations> instRel = new ArrayList<>();
+    ArrayList<Figures> refFig = new ArrayList<>();
+    ArrayList<Figures> instFig = new ArrayList<>();
+    ArrayList<Relations> refRel = new ArrayList<>();
+    ArrayList<Relations> instRel = new ArrayList<>();
     
     
     
