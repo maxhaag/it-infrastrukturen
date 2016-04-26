@@ -25,6 +25,11 @@ public class Relation {
         this.target = target;
     }
 
+    public Relation() {
+    }
+    
+    
+
     public String getType() {
         return type;
     }

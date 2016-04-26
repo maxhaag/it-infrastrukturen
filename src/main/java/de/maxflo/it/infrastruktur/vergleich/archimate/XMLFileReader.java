@@ -22,62 +22,118 @@ public class XMLFileReader {
 
     final static int REF = 0;
     final static int INST = 1;
-    
+
     ArrayList<String> refDoc = new ArrayList<>();
     ArrayList<String> instDoc = new ArrayList<>();
-    
+
     ArrayList<Figure> refFig = new ArrayList<>();
     ArrayList<Figure> instFig = new ArrayList<>();
     ArrayList<Relation> refRel = new ArrayList<>();
     ArrayList<Relation> instRel = new ArrayList<>();
-    
-    
-    
-    public static void main (String [] args) throws SAXException, IOException {
+
+    public static void main(String[] args) throws SAXException, IOException {
         XMLFileReader fReader = new XMLFileReader();
         fReader.readFiles();
         fReader.parseFigures();
         fReader.parseRelations();
-        
-    }
-        
 
-    private void readFiles()  throws SAXException, IOException {
+    }
+
+    private void readFiles() throws SAXException, IOException {
         String refFile = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
         String instFile = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
-        
-        
+
         BufferedReader bRef = new BufferedReader(new FileReader(refFile));
         BufferedReader bIns = new BufferedReader(new FileReader(instFile));
-        
+
         String oneLine = "";
-        while((oneLine = bRef.readLine()) != null) {
+        while ((oneLine = bRef.readLine()) != null) {
             refDoc.add(oneLine);
         }
-        while((oneLine = bIns.readLine()) != null) {
+        while ((oneLine = bIns.readLine()) != null) {
             instDoc.add(oneLine);
         }
-        
+
         bRef.close();
         bIns.close();
 
     }
-    
+
     private void parseFigures() {
-        
+
         patternSearch(refDoc, REF);
         patternSearch(instDoc, INST);
+        patternSearchRelations(refDoc, REF);
+        patternSearchRelations(instDoc, INST);
+        
+        
+        
 
         //TEST...ok
-        for(int i = 0; i<refFig.size(); i++) {
+        for (int i = 0; i < refFig.size(); i++) {
             //print(refFig.get(i).getType());
             //print(refFig.get(i).getId());
             //print(refFig.get(i).getName());
         }
-         for(int i = 0; i<instFig.size(); i++) {
+        for (int i = 0; i < instFig.size(); i++) {
             //print(instFig.get(i).getType());
             //print(instFig.get(i).getId());
             //print(instFig.get(i).getName());
+        }
+    }
+
+    private void patternSearchRelations(ArrayList<String> docList, int listType) {
+
+        final String END_FIG = "<folder name=\"Views\"";
+        final String ELSELECTOR = "element xsi";
+        final String TYPEREGEX = "type=\"(.*?)\"";
+        final String IDEREGEX = "id=\"(.*?)\"";
+        final String NAMEPEREGEX = "name=\"(.*?)\"";
+        final String SOURCEREX = "source=\"(.*?)\"";
+        final String TARGETREX = "target=\"(.*?)\"";
+        final String[] REGEXES = {TYPEREGEX, IDEREGEX, NAMEPEREGEX, SOURCEREX, TARGETREX};
+
+        boolean inFigures = true;
+        for (int i = 0; i < docList.size(); i++) {
+            String oneLine = docList.get(i);
+            if (inFigures) {
+                if (oneLine.contains(ELSELECTOR)) {
+                    Relation toAdd = new Relation();
+                    Pattern pat = Pattern.compile(TYPEREGEX);
+                    Matcher mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        toAdd.setType(mat.group(1));
+                    }
+                    pat = Pattern.compile(REGEXES[1]);
+                    mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        toAdd.setId(mat.group(1));
+                    }
+                    pat = Pattern.compile(REGEXES[2]);
+                    mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        toAdd.setName(mat.group(1));
+                    }
+                    pat = Pattern.compile(REGEXES[3]);
+                    mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        toAdd.setSource(mat.group(1));
+                    }
+                    pat = Pattern.compile(REGEXES[4]);
+                    mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        toAdd.setTarget(mat.group(1));
+                    }
+                    if (listType == INST) {
+                        instRel.add(toAdd);
+                    } else {
+                        refRel.add(toAdd);
+                    }
+                }
+                if (oneLine.contains(END_FIG)) {
+                    inFigures = false;
+                }
+            }
         }
     }
 
@@ -86,38 +142,42 @@ public class XMLFileReader {
         //<folder name="Relations" id="408ff6d3" type="relations">
         //regexr.com
         final String END_FIG = "<folder name=\"Relations\"";
-       
+
         final String ELSELECTOR = "element xsi";
         final String TYPEREGEX = "type=\"(.*?)\"";
         final String IDEREGEX = "id=\"(.*?)\"";
         final String NAMEPEREGEX = "name=\"(.*?)\"";
-        final String [] REGEXES = {TYPEREGEX,IDEREGEX,NAMEPEREGEX};
-      
+        final String[] REGEXES = {TYPEREGEX, IDEREGEX, NAMEPEREGEX};
+
         boolean inFigures = true;
-        for(int i = 0; i<docList.size(); i++) {
-            String oneLine = docList.get(i); 
-            if(inFigures) {
-                if(oneLine.contains(ELSELECTOR)) {
+        for (int i = 0; i < docList.size(); i++) {
+            String oneLine = docList.get(i);
+            if (inFigures) {
+                if (oneLine.contains(ELSELECTOR)) {
                     Figure toAdd = new Figure();
                     Pattern pat = Pattern.compile(TYPEREGEX);
                     Matcher mat = pat.matcher(oneLine);
-                    if(mat.find())
+                    if (mat.find()) {
                         toAdd.setType(mat.group(1));
+                    }
                     pat = Pattern.compile(REGEXES[1]);
                     mat = pat.matcher(oneLine);
-                    if(mat.find())
+                    if (mat.find()) {
                         toAdd.setId(mat.group(1));
+                    }
                     pat = Pattern.compile(REGEXES[2]);
                     mat = pat.matcher(oneLine);
-                    if(mat.find())
+                    if (mat.find()) {
                         toAdd.setName(mat.group(1));
-                    if(listType == INST)
+                    }
+                    if (listType == INST) {
                         instFig.add(toAdd);
-                    else
+                    } else {
                         refFig.add(toAdd);
+                    }
                 }
             }
-            if(oneLine.contains(END_FIG)) {
+            if (oneLine.contains(END_FIG)) {
                 inFigures = false;
             }
         }
@@ -126,20 +186,9 @@ public class XMLFileReader {
     private void print(String toPrint) {
         System.out.println(toPrint);
     }
-        
-   
-        
+
     private void parseRelations() {
-        
-        
+
     }
-    
-    
-    
 
-
-
-    
-    
-    
 }
