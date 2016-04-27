@@ -5,7 +5,6 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
-import com.sun.xml.internal.ws.util.StringUtils;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,7 +34,9 @@ public class XMLFileReader {
         XMLFileReader fReader = new XMLFileReader();
         fReader.readFiles();
         fReader.parseFigures();
-        fReader.parseRelations();
+        fReader.checkChanges();
+        
+ 
 
     }
 
@@ -61,25 +62,10 @@ public class XMLFileReader {
 
     private void parseFigures() {
 
-        patternSearch(refDoc, REF);
-        patternSearch(instDoc, INST);
+        patternSearchFigures(refDoc, REF);
+        patternSearchFigures(instDoc, INST);
         patternSearchRelations(refDoc, REF);
         patternSearchRelations(instDoc, INST);
-        
-        
-        
-
-        //TEST...ok
-        for (int i = 0; i < refFig.size(); i++) {
-            //print(refFig.get(i).getType());
-            //print(refFig.get(i).getId());
-            //print(refFig.get(i).getName());
-        }
-        for (int i = 0; i < instFig.size(); i++) {
-            //print(instFig.get(i).getType());
-            //print(instFig.get(i).getId());
-            //print(instFig.get(i).getName());
-        }
     }
 
     private void patternSearchRelations(ArrayList<String> docList, int listType) {
@@ -137,7 +123,7 @@ public class XMLFileReader {
         }
     }
 
-    private void patternSearch(ArrayList<String> docList, int listType) {
+    private void patternSearchFigures(ArrayList<String> docList, int listType) {
         //Stopp bei:
         //<folder name="Relations" id="408ff6d3" type="relations">
         //regexr.com
@@ -155,7 +141,7 @@ public class XMLFileReader {
             if (inFigures) {
                 if (oneLine.contains(ELSELECTOR)) {
                     Figure toAdd = new Figure();
-                    Pattern pat = Pattern.compile(TYPEREGEX);
+                    Pattern pat = Pattern.compile(REGEXES[0]);
                     Matcher mat = pat.matcher(oneLine);
                     if (mat.find()) {
                         toAdd.setType(mat.group(1));
@@ -182,13 +168,85 @@ public class XMLFileReader {
             }
         }
     }
+    
+    
+    private void checkChanges() {
+        
+        //grün
+        ArrayList<Figure> ref_fig_changes = new ArrayList<>();
+        //rot
+        ArrayList<Figure> inst_fig_changes = new ArrayList<>();
+       
+        ArrayList<Relation> ref_rel_changes = new ArrayList<>();
+        ArrayList<Relation> inst_rel_changes = new ArrayList<>();
+        
+        ref_fig_changes = (ArrayList<Figure>) createChangeList(refFig, instFig);
+        inst_fig_changes = (ArrayList<Figure>) createChangeList(instFig, refFig );
+        ref_rel_changes = (ArrayList<Relation>) createChangeList(refRel, instRel);
+        inst_rel_changes = (ArrayList<Relation>) createChangeList(instRel, refRel);
+        
+        
+
+        //Debug
+        for (int i = 0; i < ref_fig_changes.size(); i++) {
+            //print(ref_fig_changes.get(i).getType());
+            //print(ref_fig_changes.get(i).getId());
+            //print(ref_fig_changes.get(i).getName());
+        }
+        print("---------------");
+        
+        for (int i = 0; i < inst_fig_changes.size(); i++) {
+            //print(inst_fig_changes.get(i).getType());
+            //print(inst_fig_changes.get(i).getId());
+            //print(inst_fig_changes.get(i).getName());
+        }
+        print("---------------");
+        for (int i = 0; i < ref_rel_changes.size(); i++) {
+            print(ref_rel_changes.get(i).getType());
+            print(ref_rel_changes.get(i).getId());
+            print(ref_rel_changes.get(i).getName());
+            print(ref_rel_changes.get(i).getSource());
+            print(ref_rel_changes.get(i).getTarget());
+
+        }
+        print("---------------");
+        
+        for (int i = 0; i < inst_rel_changes.size(); i++) {
+            print(inst_rel_changes.get(i).getType());
+            print(inst_rel_changes.get(i).getId());
+            print(inst_rel_changes.get(i).getName());
+            print(ref_rel_changes.get(i).getSource());
+            print(ref_rel_changes.get(i).getTarget());
+        }
+
+    }
+    
+    
+    
 
     private void print(String toPrint) {
         System.out.println(toPrint);
     }
 
-    private void parseRelations() {
-
+    private ArrayList<?> createChangeList(ArrayList<?> refList, ArrayList<?> instList ) {
+        //Ref Figs -- Inst Figs / CIS -- CRS
+       ArrayList<? super Object> changeList = new ArrayList<>();
+        for(int i = 0; i<refList.size(); i++) {
+            boolean changed = true;
+            Object oneRef = refList.get(i);
+            for(int j = 0; j<instList.size(); j++) {
+                Object oneInst = instList.get(j);
+                if(oneRef.equals(oneInst)) {
+                    changed = false;
+                }
+            }
+            if(changed) {
+                changeList.add(oneRef);
+            }
+        }
+        return changeList;
     }
+
+
 
 }

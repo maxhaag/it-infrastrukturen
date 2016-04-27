@@ -48,6 +48,20 @@ public class Figure {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        Figure fig = (Figure)obj;
+        boolean equals = true;
+        if(!fig.getId().equals(id))
+            equals = false;
+        if(!fig.getName().equals(name))
+            equals = false;
+        if(!fig.getType().equals(type))
+            equals = false;
+        return equals;
+    }
+
     
     
     
