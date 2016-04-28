@@ -5,6 +5,8 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
+import java.util.Objects;
+
 /**
  *
  * @author Max
@@ -71,7 +73,7 @@ public class Relation {
     }
     
     
-    @Override
+   /* @Override
     public boolean equals(Object obj) {
         Relation rel = (Relation)obj;
         boolean equals = true;
@@ -122,6 +124,50 @@ public class Relation {
             equals = false;
                         
         return equals;
+    }*/
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 97 * hash + Objects.hashCode(this.type);
+        hash = 97 * hash + Objects.hashCode(this.id);
+        hash = 97 * hash + Objects.hashCode(this.name);
+        hash = 97 * hash + Objects.hashCode(this.source);
+        hash = 97 * hash + Objects.hashCode(this.target);
+        return hash;
+    }
+
+    
+    /**
+     * The ID Attribute is not checkt becouce ID can be differend
+     * @param obj
+     * @return 
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Relation other = (Relation) obj;
+        if (!Objects.equals(this.type, other.type)) {
+            return false;
+        }
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        if (!Objects.equals(this.source, other.source)) {
+            return false;
+        }
+        if (!Objects.equals(this.target, other.target)) {
+            return false;
+        }
+        return true;
     }
     
     

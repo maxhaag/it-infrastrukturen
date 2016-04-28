@@ -5,6 +5,8 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
+import java.util.Objects;
+
 /**
  *
  * @author Max
@@ -53,13 +55,21 @@ public class Figure {
     public boolean equals(Object obj) {
         Figure fig = (Figure)obj;
         boolean equals = true;
-        if(!fig.getId().equals(id))
-            equals = false;
+       
         if(!fig.getName().equals(name))
             equals = false;
         if(!fig.getType().equals(type))
             equals = false;
         return equals;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + Objects.hashCode(this.type);
+        hash = 67 * hash + Objects.hashCode(this.id);
+        hash = 67 * hash + Objects.hashCode(this.name);
+        return hash;
     }
 
     
