@@ -385,25 +385,24 @@ public class XMLFileReader {
     }
 
     //Nur sources n childs nötig
-    private void printSolutionToFile(ArrayList<String> solution){
+    private void printSolutionToFile(ArrayList<String> solution) {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter("solution.archimate"));
-            for(String s: solution){
+            for (String s : solution) {
                 bw.write(s);
                 bw.newLine();
             }
             bw.flush();
-            bw.close();            
-            
+            bw.close();
+
         } catch (IOException ex) {
             Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
-        
+
     }
 
     public ArrayList<String> buildSolution() {
-        ArrayList<String> solutionDoc= instDoc;
+        ArrayList<String> solutionDoc = instDoc;
 
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure f = ref_fig_changes.get(i);
@@ -439,6 +438,25 @@ public class XMLFileReader {
                 }
             }
         }
+        for (int i = 0; i < inst_fig_changes.size(); i++) {
+            Figure f = inst_fig_changes.get(i);
+            for (int j = 0; j < solutionDoc.size(); j++) {
+                String solutionLine = solutionDoc.get(j);
+                if (solutionLine.contains("child xsi")) {
+                    Pattern pat = Pattern.compile("archimateElement=\"(.*?)\"");
+                    Matcher mat = pat.matcher(solutionLine);
+                    if (mat.find()) {
+                        if(mat.group(1).equals(f.getId())){
+                            solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00ff00\"");
+                            solutionDoc.add(j,solutionLine);
+                            solutionDoc.remove(j+1);
+                        }
+                    }
+                }
+                
+            }
+        }
+
         return solutionDoc;
     }
 
@@ -450,6 +468,7 @@ public class XMLFileReader {
             int i = Integer.parseInt(mat.group(1));
             line = line.replaceAll("id=\"(.*?)\"", "id=" + i * 1000);
         }
+
         return line;
     }
 

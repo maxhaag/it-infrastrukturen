@@ -427,7 +427,7 @@
           <bounds x="352" y="43" width="100" height="60"/>
           <sourceConnection xsi:type="archimate:Connection" id="4151" source="4081" target="4072" relationship="1442"/>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="4079" textAlignment="2" targetConnections="4159" fillColor="#ffff80" archimateElement="1202">
+        <child xsi:type="archimate:DiagramObject" id="4079" textAlignment="2" targetConnections="4159" fillColor="#00ff00" archimateElement="1202">
           <bounds x="20" y="43" width="103" height="60"/>
           <sourceConnection xsi:type="archimate:Connection" id="4150" source="4079" target="4072" relationship="1438"/>
         </child>
@@ -659,7 +659,7 @@
         <bounds x="17" y="230" width="125" height="60"/>
         <sourceConnection xsi:type="archimate:Connection" id="4044" source="4040" target="4035" relationship="1321"/>
       </child>
-      <child xsi:type="archimate:DiagramObject" id="4036" textAlignment="2" targetConnections="4055" fillColor="#0080c0" archimateElement="1202">
+      <child xsi:type="archimate:DiagramObject" id="4036" textAlignment="2" targetConnections="4055" fillColor="#00ff00" archimateElement="1202">
         <bounds x="141" y="130" width="109" height="60"/>
         <sourceConnection xsi:type="archimate:Connection" id="4048" source="4036" target="4034" relationship="1293"/>
       </child>
@@ -1069,7 +1069,7 @@
         <child xsi:type="archimate:DiagramObject" id="4020" textAlignment="2" targetConnections="4023" fillColor="#008080" archimateElement="1208">
           <bounds x="170" y="51" width="100" height="53"/>
         </child>
-        <child xsi:type="archimate:DiagramObject" id="4021" textAlignment="2" fillColor="#008080" archimateElement="1202">
+        <child xsi:type="archimate:DiagramObject" id="4021" textAlignment="2" fillColor="#00ff00" archimateElement="1202">
           <bounds x="20" y="131" width="113" height="53"/>
         </child>
       </child>
