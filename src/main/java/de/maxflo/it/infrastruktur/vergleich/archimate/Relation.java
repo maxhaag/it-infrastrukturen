@@ -18,18 +18,21 @@ public class Relation {
     private String name;
     private String source;
     private String target;
+    private String folder;
+    private String line;
 
-    public Relation(String type, String id, String name, String source, String target) {
+  
+    public Relation() {
+    }
+
+    public Relation(String type, String id, String name, String source, String target, String folder) {
         this.type = type;
         this.id = id;
         this.name = name;
         this.source = source;
         this.target = target;
+        this.folder = folder;
     }
-
-    public Relation() {
-    }
-    
     
 
     public String getType() {
@@ -71,78 +74,35 @@ public class Relation {
     public void setTarget(String target) {
         this.target = target;
     }
-    
-    
-   /* @Override
-    public boolean equals(Object obj) {
-        Relation rel = (Relation)obj;
-        boolean equals = true;
-        
-        if(rel.getType()!= null && type == null) 
-            equals = false;
-        else if(rel.getType() == null && type != null)
-            equals = false;
-        else if(rel.getType() == null && type == null)
-            equals = true;
-        else if(!rel.getType().equals(type))
-            equals = false;
- 
-        if(rel.getId() != null && id == null) 
-            equals = false;
-        else if(rel.getId() == null && id != null)
-            equals = false;
-        else if(rel.getId() == null && id == null)
-            equals = true;
-        else if(!rel.getId().equals(id))
-            equals = false;
-        
-        if(rel.getName()!= null && name == null) 
-            equals = false;
-        else if(rel.getName() == null && name != null)
-            equals = false;
-        else if(rel.getName() == null && name == null)
-            equals = true;
-        else if(!rel.getName().equals(name))
-            equals = false;
 
-        if(rel.getSource()!= null && source == null) 
-            equals = false;
-        else if(rel.getSource() == null && source != null)
-            equals = false;
-        else if(rel.getSource() == null && source == null)
-            equals = true;
-        else if(!rel.getSource().equals(source))
-            equals = false;
-        
-        if(rel.getTarget()!= null && target == null) 
-            equals = false;
-        else if(rel.getTarget() == null && target != null)
-            equals = false;
-        else if(rel.getTarget() == null && target == null)
-            equals = true;
-        else if(!rel.getTarget().equals(target))
-            equals = false;
-                        
-        return equals;
-    }*/
+    public String getFolder() {
+        return folder;
+    }
 
-    @Override
-    public int hashCode() {
-        int hash = 5;
-        hash = 97 * hash + Objects.hashCode(this.type);
-        hash = 97 * hash + Objects.hashCode(this.id);
-        hash = 97 * hash + Objects.hashCode(this.name);
-        hash = 97 * hash + Objects.hashCode(this.source);
-        hash = 97 * hash + Objects.hashCode(this.target);
-        return hash;
+    public void setFolder(String folder) {
+        this.folder = folder;
+    }
+
+    public String getLine() {
+        return line;
+    }
+
+    public void setLine(String line) {
+        this.line = line;
     }
 
     
-    /**
-     * The ID Attribute is not checkt becouce ID can be differend
-     * @param obj
-     * @return 
-     */
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.type);
+        hash = 23 * hash + Objects.hashCode(this.name);
+        hash = 23 * hash + Objects.hashCode(this.source);
+        hash = 23 * hash + Objects.hashCode(this.target);
+        hash = 23 * hash + Objects.hashCode(this.folder);
+        return hash;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -167,9 +127,20 @@ public class Relation {
         if (!Objects.equals(this.target, other.target)) {
             return false;
         }
+        if (!Objects.equals(this.folder, other.folder)) {
+            return false;
+        }
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "Relation{" + "type=" + type + ", id=" + id + ", name=" + name + ", source=" + source + ", target=" + target + ", folder=" + folder + '}';
+    }
     
+    
+  
+   
     
     
 }
