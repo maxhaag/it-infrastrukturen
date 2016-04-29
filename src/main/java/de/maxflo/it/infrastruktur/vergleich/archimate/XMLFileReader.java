@@ -26,6 +26,12 @@ public class XMLFileReader {
     private final static int REF = 0;
     private final static int INST = 1;
 
+    private final static int COLOR_RED = 2;
+    private final static int COLOR_GREEN = 3;
+
+    private final static int LINE_COL = 4;
+    private final static int FILL_COL = 5;
+
     private ArrayList<String> refDoc = new ArrayList<>();
     private ArrayList<String> instDoc = new ArrayList<>();
 
@@ -404,38 +410,62 @@ public class XMLFileReader {
     public ArrayList<String> buildSolution() {
         ArrayList<String> solutionDoc = instDoc;
 
+        String relStart = "<folder name=\"Relations\"";
+        String relEnd = "<folder name=\"Views\"";
+
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure f = ref_fig_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
-                if (solutionDoc.get(j).contains(f.getFolder())) {
-                    boolean idExist = false;
-                    for (Figure figures : instFig) {
-                        if (figures.getId().equals(f.getId())) {
-                            idExist = true;
-                            solutionDoc.add(j + 1, getLineWithOtherID(f.getLine()));
+                String oneSolLine = solutionDoc.get(j);
+                boolean inFig = true;
+                if (inFig) {
+                    if (oneSolLine.contains(relStart)) {
+                        inFig = false;
+                    }
+                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(f.getFolder())) {
+                        boolean idExist = false;
+                        for (Figure figures : instFig) {
+                            if (figures.getId().equals(f.getId())) {
+                                idExist = true;
+                                solutionDoc.add(j + 1, getLineWithOtherID(f.getLine()));
+                            }
+                        }
+                        if (!idExist) {
+                            solutionDoc.add(j + 1, f.getLine());
                         }
                     }
-                    if (!idExist) {
-                        solutionDoc.add(j + 1, f.getLine());
-                    }
+
                 }
+
             }
         }
         for (int i = 0; i < ref_rel_changes.size(); i++) {
             Relation r = ref_rel_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
-                if (solutionDoc.get(j).contains(r.getFolder())) {
-                    boolean idExist = false;
-                    for (Relation relation : instRel) {
-                        if (relation.getId().equals(r.getId())) {
-                            idExist = true;
-                            solutionDoc.add(j + 1, getLineWithOtherID(r.getLine()));
+                String oneSolLine = solutionDoc.get(j);
+                boolean beginRel = false;
+                if (oneSolLine.contains(relStart)) {
+                    beginRel = true;
+                }
+                if (oneSolLine.contains(relEnd)) {
+                    beginRel = false;
+                }
+                if (beginRel) {
+                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(r.getFolder())) {
+                        boolean idExist = false;
+                        for (Relation relation : instRel) {
+                            if (relation.getId().equals(r.getId())) {
+                                idExist = true;
+                                solutionDoc.add(j + 1, getLineWithOtherID(r.getLine()));
+                            }
+                        }
+                        if (!idExist) {
+                            solutionDoc.add(j + 1, r.getLine());
                         }
                     }
-                    if (!idExist) {
-                        solutionDoc.add(j + 1, r.getLine());
-                    }
+
                 }
+
             }
         }
         for (int i = 0; i < inst_fig_changes.size(); i++) {
@@ -446,15 +476,100 @@ public class XMLFileReader {
                     Pattern pat = Pattern.compile("archimateElement=\"(.*?)\"");
                     Matcher mat = pat.matcher(solutionLine);
                     if (mat.find()) {
-                        if(mat.group(1).equals(f.getId())){
-                            solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00ff00\"");
-                            solutionDoc.add(j,solutionLine);
-                            solutionDoc.remove(j+1);
+                        if (mat.group(1).equals(f.getId())) {
+
+                            if (solutionLine.contains("fillColor")) {
+                                //solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00ff00\"");
+                                solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00FF00\"");
+
+                            } else {
+                                solutionLine = getLineInsertLineColor(solutionLine, COLOR_GREEN, FILL_COL);
+                            }
+                            solutionDoc.add(j, solutionLine);
+                            solutionDoc.remove(j + 1);
                         }
                     }
                 }
-                
+
             }
+        }
+
+        for (int i = 0; i < inst_rel_changes.size(); i++) {
+            Relation r = inst_rel_changes.get(i);
+            for (int j = 0; j < solutionDoc.size(); j++) {
+                String solutionLine = solutionDoc.get(j);
+                if (solutionLine.contains("sourceConnection xsi")) {
+                    Pattern pat = Pattern.compile("relationship=\"(.*?)\"");
+                    Matcher mat = pat.matcher(solutionLine);
+                    if (mat.find()) {
+                        if (mat.group(1).equals(r.getId())) {
+                            if (solutionLine.contains("lineColor")) {
+                                solutionLine = solutionLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#00FF00\"");
+                            } else {
+                                solutionLine = getLineInsertLineColor(solutionLine, COLOR_GREEN, LINE_COL);
+                            }
+                            solutionDoc.add(j, solutionLine);
+                            solutionDoc.remove(j + 1);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        for (int i = 0; i < ref_fig_changes.size(); i++) {
+
+            Figure f = ref_fig_changes.get(i);
+            for (int j = 0; j < allRefChilds.size(); j++) {
+                Child ch = allRefChilds.get(j);
+                if (ch.getArchimateElementID().equals(f.getId())) {
+                    for (int k = 0; k < solutionDoc.size(); k++) {
+                        String solutionLine = solutionDoc.get(k);
+                        boolean inView = false;
+                        if (solutionLine.contains(relEnd)) {
+                            inView = true;
+                        }
+                        if (inView) {
+                            if (solutionLine.contains("element xsi")) {
+                                String NAMEREGEX = "name=\"(.*?)\"";
+                                Pattern pat = Pattern.compile(NAMEREGEX);
+                                Matcher mat = pat.matcher(solutionLine);
+                                if (mat.find()) {
+                                    if (mat.group(1).equals(ch.getViewObjekt())) {
+
+                                        ArrayList<String> childLines = ch.getchildlines();
+                                        for (int l = childLines.size() - 1; l >= 0; l--) {
+                                            //färben
+                                            String oneChildLine = childLines.get(l);
+                                            if (l == 0) {
+                                                if (oneChildLine.contains("fillColor")) {
+                                                    oneChildLine = oneChildLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#FF0000\"");
+                                                } else {
+                                                    oneChildLine = getLineInsertLineColor(solutionLine, COLOR_RED, FILL_COL);
+                                                }
+                                            } else if (oneChildLine.contains("sourceConnection xsi")) {
+
+                                                if (oneChildLine.contains("lineColor")) {
+                                                    oneChildLine = oneChildLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
+                                                } else {
+                                                    oneChildLine = getLineInsertLineColor(solutionLine, COLOR_RED, LINE_COL);
+                                                }
+                                            }
+                                            solutionDoc.add(k + 1, oneChildLine);
+
+                                        }
+
+                                    }
+
+                                }
+                            }
+                        }
+
+                    }
+
+                }
+            }
+
         }
 
         return solutionDoc;
@@ -467,6 +582,32 @@ public class XMLFileReader {
         if (mat.find()) {
             int i = Integer.parseInt(mat.group(1));
             line = line.replaceAll("id=\"(.*?)\"", "id=" + i * 1000);
+        }
+
+        return line;
+    }
+
+    public String getLineInsertLineColor(String line, int color, int type) {
+
+        String colString = "";
+        String fill = "";
+        if (color == COLOR_GREEN) {
+            colString = "\"#00FF00\"";
+        } else if (color == COLOR_RED) {
+            colString = "\"#FF0000\"";
+        }
+
+        if (type == FILL_COL) {
+            fill = "fillColor";
+        } else if (type == LINE_COL) {
+            fill = "lineColor";
+        }
+
+        Pattern pat = Pattern.compile("id=\"(.*?)\"");
+        Matcher mat = pat.matcher(line);
+        if (mat.find()) {
+            int i = Integer.parseInt(mat.group(1));
+            line = line.replaceAll("id=\"(.*?)\"", "id=\"" + i + "\" " + fill + "=" + colString);
         }
 
         return line;
