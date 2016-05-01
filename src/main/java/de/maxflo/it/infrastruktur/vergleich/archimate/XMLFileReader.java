@@ -7,6 +7,7 @@ package de.maxflo.it.infrastruktur.vergleich.archimate;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -51,10 +52,24 @@ public class XMLFileReader {
     //grün
     private ArrayList<Relation> inst_rel_changes = new ArrayList<>();
 
+    
+    //Benötigt für GUI Elemente
+    private static boolean startGui = false;
+    private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
+    private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
+    private File refFile = new File(refFileStr);
+    private File instFile = new File(instFileStr);
+
     public static void main(String[] args) throws SAXException, IOException {
 
         XMLFileReader fReader = new XMLFileReader();
 
+        if (startGui) {
+            GuiWindow gui = new GuiWindow(fReader);
+            gui.setVisible(true);
+        }
+
+        //Später von GUI aus aufrufen...
         fReader.readFiles();
         fReader.parseFigures();
         fReader.checkChanges();
@@ -63,8 +78,6 @@ public class XMLFileReader {
     }
 
     private void readFiles() throws SAXException, IOException {
-        String refFile = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
-        String instFile = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
 
         BufferedReader bRef = new BufferedReader(new FileReader(refFile));
         BufferedReader bIns = new BufferedReader(new FileReader(instFile));
@@ -308,6 +321,7 @@ public class XMLFileReader {
         inst_rel_changes = (ArrayList<Relation>) createChangeList(instRel, refRel);
 
         //Debug
+        /*
         print("Ref Figure");
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             print(ref_fig_changes.get(i).getType());
@@ -340,10 +354,10 @@ public class XMLFileReader {
             print("Source " + ref_rel_changes.get(i).getSource());
             print("Target " + ref_rel_changes.get(i).getTarget());
         }
-
+         */
     }
 
-    private void print(String toPrint) {
+    public void print(String toPrint) {
         System.out.println(toPrint);
     }
 
@@ -611,6 +625,22 @@ public class XMLFileReader {
         }
 
         return line;
+    }
+
+    public File getRefFile() {
+        return refFile;
+    }
+
+    public void setRefFile(File refFile) {
+        this.refFile = refFile;
+    }
+
+    public File getInstFile() {
+        return instFile;
+    }
+
+    public void setInstFile(File instFile) {
+        this.instFile = instFile;
     }
 
 }
