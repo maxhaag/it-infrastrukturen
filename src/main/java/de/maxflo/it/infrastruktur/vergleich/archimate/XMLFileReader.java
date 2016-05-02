@@ -42,17 +42,19 @@ public class XMLFileReader {
     private ArrayList<Relation> instRel = new ArrayList<>();
     private ArrayList<Child> allRefChilds = new ArrayList<>();
     private ArrayList<Child> allInstChilds = new ArrayList<>();
+    private ArrayList<SourceConnection> allRefSourceConnections = new ArrayList<>();
+    private ArrayList<SourceConnection> allInstSourceConnections = new ArrayList<>();
 
     //rot
     private ArrayList<Figure> ref_fig_changes = new ArrayList<>();
     //grün
     private ArrayList<Figure> inst_fig_changes = new ArrayList<>();
+
     //rot
     private ArrayList<Relation> ref_rel_changes = new ArrayList<>();
     //grün
     private ArrayList<Relation> inst_rel_changes = new ArrayList<>();
 
-    
     //Benötigt für GUI Elemente
     private static boolean startGui = false;
     private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
@@ -101,6 +103,10 @@ public class XMLFileReader {
         patternSearchFigures(instDoc, INST);
         patternSearchRelations(refDoc, REF);
         patternSearchRelations(instDoc, INST);
+        patternSearchChileds(refDoc, REF);
+        patternSearchChileds(instDoc, INST);
+        patternSearchSourceConnection(refDoc, REF);
+        patternSearchSourceConnection(instDoc, INST);
     }
 
     private void patternSearchChileds(ArrayList<String> docList, int listType) {
@@ -115,7 +121,8 @@ public class XMLFileReader {
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
 
         String currentViewName = "";
-
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        int childCounter = 0;
         boolean inView = false;
         boolean isInChild = false;
 
@@ -138,13 +145,13 @@ public class XMLFileReader {
                 }
 
                 if (oneLine.contains(CHILDSTART)) {
-
+                    childCounter++;
                     Pattern pat = Pattern.compile(ARCHIELEMENTID);
                     Matcher mat = pat.matcher(oneLine);
                     if (mat.find()) {
                         child.setArchimateElementID(mat.group(1));
                         child.setViewObjekt(currentViewName);
-                        child.getchildlines().add(oneLine);
+
                     }
                     isInChild = true;
                 }
@@ -159,17 +166,81 @@ public class XMLFileReader {
                     }
                     child.getchildlines().add(oneLine);
                     if (oneLine.contains(CHILDEND)) {
-                        isInChild = false;
-                        if (listType == INST) {
-                            allInstChilds.add(child);
-                            child = new Child();
-                        } else {
-                            allRefChilds.add(child);
-                            child = new Child();
+                        childCounter--;
+                        if (childCounter <= 0) {
+                            isInChild = false;
+                            if (listType == INST) {
+                                allInstChilds.add(child);
+                                child = new Child();
+                            } else {
+                                allRefChilds.add(child);
+                                child = new Child();
+                            }
                         }
                     }
 
                 }
+            }
+
+        }
+    }
+
+    private void patternSearchSourceConnection(ArrayList<String> docList, int listType) {
+
+        final String START_FIG = "<folder name=\"Views\"";
+
+        final String IDPEREGEX = "id=\"(.*?)\"";
+        final String SOURCESTART = "sourceConnection xsi";
+        final String RELATIONSHIP = "relationship=\"(.*?)\"";
+        final String CHILDSTART = "child xsi";
+
+        String childeID = "";
+        boolean inView = false;
+
+        SourceConnection source = new SourceConnection();
+
+        for (int i = 0; i < docList.size(); i++) {
+            String oneLine = docList.get(i);
+            if (oneLine.contains(START_FIG)) {
+                inView = true;
+            }
+            if (inView) {
+
+                if (oneLine.contains(CHILDSTART)) {
+
+                    Pattern pat = Pattern.compile(IDPEREGEX);
+                    Matcher mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        childeID = mat.group(1);
+                    }
+                    continue;
+                }
+
+                if (oneLine.contains(SOURCESTART)) {
+
+                    Pattern pat = Pattern.compile(IDPEREGEX);
+                    Matcher mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        source.setId(mat.group(1));
+                        source.setConnectionLine(oneLine);
+                        source.setChildID(childeID);
+                        Pattern patRel = Pattern.compile(RELATIONSHIP);
+                        Matcher matRel = patRel.matcher(oneLine);
+                        if (matRel.find()) {
+                            source.setRelationship(matRel.group(1));
+                        }
+                    }
+                    if (listType == INST) {
+                        allInstSourceConnections.add(source);
+                        source = new SourceConnection();
+
+                    } else {
+                        allRefSourceConnections.add(source);
+                        source = new SourceConnection();
+
+                    }
+                }
+
             }
 
         }
@@ -455,9 +526,10 @@ public class XMLFileReader {
         }
         for (int i = 0; i < ref_rel_changes.size(); i++) {
             Relation r = ref_rel_changes.get(i);
+            boolean beginRel = false;
             for (int j = 0; j < solutionDoc.size(); j++) {
                 String oneSolLine = solutionDoc.get(j);
-                boolean beginRel = false;
+                
                 if (oneSolLine.contains(relStart)) {
                     beginRel = true;
                 }
@@ -465,7 +537,7 @@ public class XMLFileReader {
                     beginRel = false;
                 }
                 if (beginRel) {
-                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(r.getFolder())) {
+                    if (oneSolLine.contains("folder name") && oneSolLine.contains(r.getFolder())) {
                         boolean idExist = false;
                         for (Relation relation : instRel) {
                             if (relation.getId().equals(r.getId())) {
@@ -536,10 +608,11 @@ public class XMLFileReader {
             Figure f = ref_fig_changes.get(i);
             for (int j = 0; j < allRefChilds.size(); j++) {
                 Child ch = allRefChilds.get(j);
-                if (ch.getArchimateElementID().equals(f.getId())) {
+                if (ch.getArchimateElementID() != null && ch.getArchimateElementID().equals(f.getId())) {
+                    boolean inView = false;
                     for (int k = 0; k < solutionDoc.size(); k++) {
                         String solutionLine = solutionDoc.get(k);
-                        boolean inView = false;
+
                         if (solutionLine.contains(relEnd)) {
                             inView = true;
                         }
@@ -552,25 +625,27 @@ public class XMLFileReader {
                                     if (mat.group(1).equals(ch.getViewObjekt())) {
 
                                         ArrayList<String> childLines = ch.getchildlines();
-                                        for (int l = childLines.size() - 1; l >= 0; l--) {
-                                            //färben
-                                            String oneChildLine = childLines.get(l);
-                                            if (l == 0) {
-                                                if (oneChildLine.contains("fillColor")) {
-                                                    oneChildLine = oneChildLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#FF0000\"");
-                                                } else {
-                                                    oneChildLine = getLineInsertLineColor(solutionLine, COLOR_RED, FILL_COL);
-                                                }
-                                            } else if (oneChildLine.contains("sourceConnection xsi")) {
+                                        if (!childLines.isEmpty()) {
+                                            for (int l = childLines.size() - 1; l >= 0; l--) {
+                                                //färben
+                                                String oneChildLine = childLines.get(l);
+                                                if (l == 0) {
+                                                    if (oneChildLine.contains("fillColor")) {
+                                                        oneChildLine = oneChildLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#FF0000\"");
+                                                    } else {
+                                                        oneChildLine = getLineInsertLineColor(oneChildLine, COLOR_RED, FILL_COL);
+                                                    }
+                                                } else if (oneChildLine.contains("sourceConnection xsi")) {
 
-                                                if (oneChildLine.contains("lineColor")) {
-                                                    oneChildLine = oneChildLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
-                                                } else {
-                                                    oneChildLine = getLineInsertLineColor(solutionLine, COLOR_RED, LINE_COL);
+                                                    if (oneChildLine.contains("lineColor")) {
+                                                        oneChildLine = oneChildLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
+                                                    } else {
+                                                        oneChildLine = getLineInsertLineColor(oneChildLine, COLOR_RED, LINE_COL);
+                                                    }
                                                 }
+                                                solutionDoc.add(k + 1, oneChildLine);
+
                                             }
-                                            solutionDoc.add(k + 1, oneChildLine);
-
                                         }
 
                                     }
@@ -582,6 +657,31 @@ public class XMLFileReader {
                     }
 
                 }
+            }
+
+        }
+
+        for (int i = 0; i < ref_rel_changes.size(); i++) {
+            Relation r = ref_rel_changes.get(i);
+            for (int j = 0; j < allRefSourceConnections.size(); j++) {
+                SourceConnection s = allRefSourceConnections.get(j);
+                if (s.getRelationship().equals(r.getId())) {
+                    for (int k = 0; k < solutionDoc.size(); k++) {
+                        String oneSolutionLine = solutionDoc.get(k);
+                        if (oneSolutionLine.contains("child xsi")) {
+                            String NAMEREGEX = "id=\"(.*?)\"";
+                            Pattern pat = Pattern.compile(NAMEREGEX);
+                            Matcher mat = pat.matcher(oneSolutionLine);
+                            if (mat.find()) {
+                                    if(s.getChildID().equals(mat.group(1))){
+                                        solutionDoc.add(k + 2, s.getConnectionLine());
+                                    }
+                            }
+                        }
+
+                    }
+                }
+
             }
 
         }

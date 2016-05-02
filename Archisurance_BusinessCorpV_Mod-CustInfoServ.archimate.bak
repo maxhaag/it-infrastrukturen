@@ -656,7 +656,7 @@
     <element xsi:type="archimate:ArchimateDiagramModel" id="3761" name="Business Process View" viewpoint="8">
       <child xsi:type="archimate:DiagramObject" id="3788" textAlignment="2" targetConnections="3806 3811" archimateElement="521">
         <bounds x="200" y="663" width="120" height="60"/>
-        <sourceConnection xsi:type="archimate:Connection" id="3812" lineColor="#0000ff" source="3788" target="3783" relationship="770">
+        <sourceConnection xsi:type="archimate:Connection" id="3812" source="3788" target="3783" relationship="770">
           <bendpoint startX="-180" startY="-1" endY="238"/>
         </sourceConnection>
       </child>
