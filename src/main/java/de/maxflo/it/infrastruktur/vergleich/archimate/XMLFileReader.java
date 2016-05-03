@@ -8,6 +8,7 @@ package de.maxflo.it.infrastruktur.vergleich.archimate;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class XMLFileReader {
     private File refFile = new File(refFileStr);
     private File instFile = new File(instFileStr);
 
-    public static void main(String[] args) throws SAXException, IOException {
+    public static void main(String[] args) {
 
         XMLFileReader fReader = new XMLFileReader();
 
@@ -79,38 +80,75 @@ public class XMLFileReader {
 
     }
 
-    private void readFiles() throws SAXException, IOException {
+    /**
+     * This Method read the two Files wich are will be compared.
+     * The refDoc File is the Reference for the other File
+     * The instDoc File ist the Instance wich is created with Reference as Template
+     */
+    private void readFiles() {
 
-        BufferedReader bRef = new BufferedReader(new FileReader(refFile));
-        BufferedReader bIns = new BufferedReader(new FileReader(instFile));
-
-        String oneLine = "";
-        while ((oneLine = bRef.readLine()) != null) {
-            refDoc.add(oneLine);
+        BufferedReader bRef = null;
+        BufferedReader bIns = null;
+        try {
+            bRef = new BufferedReader(new FileReader(refFile));
+            bIns = new BufferedReader(new FileReader(instFile));
+            String oneLine = "";
+            while ((oneLine = bRef.readLine()) != null) {
+                refDoc.add(oneLine);
+            }
+            while ((oneLine = bIns.readLine()) != null) {
+                instDoc.add(oneLine);
+            }
+            bRef.close();
+            bIns.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            try {
+                bRef.close();
+                bIns.close();
+            } catch (IOException ex) {
+                Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
-        while ((oneLine = bIns.readLine()) != null) {
-            instDoc.add(oneLine);
-        }
-
-        bRef.close();
-        bIns.close();
 
     }
 
+    /**
+     * This Method Parse severale Differences from the refDoc and instDoc lists.
+     *
+     */
     private void parseFigures() {
 
+        //Erzeugt eine Liste in welcher die Figures aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
         patternSearchFigures(refDoc, REF);
+        //Erzeugt eine Liste in welcher die Figures aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
         patternSearchFigures(instDoc, INST);
+        //Erzeugt eine Liste in welcher die Relations aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
         patternSearchRelations(refDoc, REF);
+        //Erzeugt eine Liste in welcher die Relations aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
         patternSearchRelations(instDoc, INST);
+        //Erzeugt eine Liste aller Childs aus der refDoc Liste. Um Später die Childs heraus zu filtern welche nicht in der instDoc Liste vorhanden sind. In der Solution dann Rot eingefärbt.
         patternSearchChileds(refDoc, REF);
+        //Erzeugt eine Liste aller Childs aus der instDoc Liste.
         patternSearchChileds(instDoc, INST);
+        //Erzeugt eine Liste aller SourceConnection aus der refDoc Liste um die SourceConnection in die SolutionListe zu schreiben welche nicht in der instDoc Liste vorhanden sind.
         patternSearchSourceConnection(refDoc, REF);
+        //Noch nicht benutzt bisher.
         patternSearchSourceConnection(instDoc, INST);
     }
 
+    /**
+     * Reads all Childs from xml Archimate List
+     * @param docList StingArray from Archimate XML List
+     * @param listType Typ REF or INST, REF writes the allRefChilds and INST the allInstChilds List.
+     */
     private void patternSearchChileds(ArrayList<String> docList, int listType) {
 
+        
+        //String regex für verschiedene vergleiche von String Lines
         final String START_FIG = "<folder name=\"Views\"";
         final String ELSELECTOR = "element xsi";
         final String NAMEPEREGEX = "name=\"(.*?)\"";
@@ -120,20 +158,31 @@ public class XMLFileReader {
         final String SOURCECONNECTION = "sourceConnection xsi";
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
 
+        //Um in einem Child zu Speichern zu welcher View dieses gehört
         String currentViewName = "";
-        ///////////////////////////////////////////////////////////////////////////////////////////////
+       
+        //Zählt das lesen von Child lines um die richtige anzahl von Child Ende lines zu erzeugen und weit genug zu lesen.
         int childCounter = 0;
+        
+        //beginnt erst zu lesen wenn die View in der xml begonnen hat
         boolean inView = false;
+        
+        //Liest weiter sobald ein Child beginnt um die einzelnen Childs komplett zu lesen.
         boolean isInChild = false;
 
         Child child = new Child();
 
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
+            
+            //Prüft ob die View startet
             if (oneLine.contains(START_FIG)) {
                 inView = true;
             }
+            
+            //Sobald in der View
             if (inView) {
+                //Prüft ob eine neue View startet und schreibt den wert in currentViewname
                 if (oneLine.contains(ELSELECTOR)) {
 
                     Pattern pat = Pattern.compile(NAMEPEREGEX);
@@ -144,6 +193,7 @@ public class XMLFileReader {
                     continue;
                 }
 
+                //Prüft ob ein Child startet
                 if (oneLine.contains(CHILDSTART)) {
                     childCounter++;
                     Pattern pat = Pattern.compile(ARCHIELEMENTID);
@@ -151,10 +201,11 @@ public class XMLFileReader {
                     if (mat.find()) {
                         child.setArchimateElementID(mat.group(1));
                         child.setViewObjekt(currentViewName);
-
                     }
                     isInChild = true;
                 }
+                
+                //Prüft ob man sich gerade in einem Child befindet
                 if (isInChild) {
                     if (oneLine.contains(SOURCECONNECTION)) {
                         Pattern pat = Pattern.compile(RELATIONSHIP);
@@ -165,6 +216,8 @@ public class XMLFileReader {
 
                     }
                     child.getchildlines().add(oneLine);
+                    
+                    //Sobald ein Childende tag auftaucht wird überprüft ob es das letzte in diesem Child ist und falls ja wird in die jeweilige nach Typdefinierte Liste geschrieben.
                     if (oneLine.contains(CHILDEND)) {
                         childCounter--;
                         if (childCounter <= 0) {
@@ -185,16 +238,25 @@ public class XMLFileReader {
         }
     }
 
+    
+    /**
+     * Reads all SourceConnection from XML Archimate List
+     * @param docList StingArray from Archimate XML List
+     * @param listType Typ REF or INST, REF writes the allRefSourceConnections and INST the allInstSourceConnections List.
+     */
     private void patternSearchSourceConnection(ArrayList<String> docList, int listType) {
 
+         //String regex für verschiedene vergleiche von String Lines
         final String START_FIG = "<folder name=\"Views\"";
-
         final String IDPEREGEX = "id=\"(.*?)\"";
         final String SOURCESTART = "sourceConnection xsi";
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
         final String CHILDSTART = "child xsi";
 
+        //Speichert die Childe ID in welcher man sich gerade befindet
         String childeID = "";
+        
+        //beginnt erst zu lesen wenn die View in der xml begonnen hat
         boolean inView = false;
 
         SourceConnection source = new SourceConnection();
@@ -246,6 +308,11 @@ public class XMLFileReader {
         }
     }
 
+    /**
+     * 
+     * @param docList StingArray from Archimate XML List
+     * @param listType Typ REF or INST, REF writes the refRel and INST the instRel List.
+     */
     private void patternSearchRelations(ArrayList<String> docList, int listType) {
 
         final String END_REL = "<folder name=\"Views\"";
@@ -328,6 +395,11 @@ public class XMLFileReader {
         }
     }
 
+    /**
+     * 
+     * @param docList StingArray from Archimate XML List
+     * @param listType Typ REF or INST, REF writes the refFig and INST the instFig List.
+     */
     private void patternSearchFigures(ArrayList<String> docList, int listType) {
         //Stopp bei:
         //<folder name="Relations" id="408ff6d3" type="relations">
@@ -384,54 +456,30 @@ public class XMLFileReader {
         }
     }
 
+    /**
+     * Writes some differend Changes betwenn ref and inst compared by figures and relations
+     */
     private void checkChanges() {
-
         ref_fig_changes = (ArrayList<Figure>) createChangeList(refFig, instFig);
         inst_fig_changes = (ArrayList<Figure>) createChangeList(instFig, refFig);
         ref_rel_changes = (ArrayList<Relation>) createChangeList(refRel, instRel);
         inst_rel_changes = (ArrayList<Relation>) createChangeList(instRel, refRel);
-
-        //Debug
-        /*
-        print("Ref Figure");
-        for (int i = 0; i < ref_fig_changes.size(); i++) {
-            print(ref_fig_changes.get(i).getType());
-            print(ref_fig_changes.get(i).getId());
-            print(ref_fig_changes.get(i).getName());
-        }
-        print("---------------");
-        print("Inst Figure");
-        for (int i = 0; i < inst_fig_changes.size(); i++) {
-            print(inst_fig_changes.get(i).getType());
-            print(inst_fig_changes.get(i).getId());
-            print(inst_fig_changes.get(i).getName());
-        }
-        print("---------------");
-        print("Ref Rel");
-        for (int i = 0; i < ref_rel_changes.size(); i++) {
-            print("Type " + ref_rel_changes.get(i).getType());
-            print("ID " + ref_rel_changes.get(i).getId());
-            print("Name" + ref_rel_changes.get(i).getName());
-            print("Source " + ref_rel_changes.get(i).getSource());
-            print("Target " + ref_rel_changes.get(i).getTarget());
-
-        }
-        print("---------------");
-        print("Inst Rel");
-        for (int i = 0; i < inst_rel_changes.size(); i++) {
-            print("Type " + inst_rel_changes.get(i).getType());
-            print("ID " + inst_rel_changes.get(i).getId());
-            print("Name " + inst_rel_changes.get(i).getName());
-            print("Source " + ref_rel_changes.get(i).getSource());
-            print("Target " + ref_rel_changes.get(i).getTarget());
-        }
-         */
     }
 
+    /**
+     * Print a Line of String so Console for Debugging oder Logging
+     * @param toPrint 
+     */
     public void print(String toPrint) {
         System.out.println(toPrint);
     }
 
+    /**
+     * Create an Change List of two ArrayLists comparte by equals Method of a Class
+     * @param refList
+     * @param instList
+     * @return 
+     */
     private ArrayList<?> createChangeList(ArrayList<?> refList, ArrayList<?> instList) {
         //Ref Figs -- Inst Figs / CIS -- CRS
         ArrayList<? super Object> changeList = new ArrayList<>();
@@ -451,30 +499,38 @@ public class XMLFileReader {
         return changeList;
     }
 
+    /**
+     * 
+     * @param id
+     * @return 
+     */
     private String findNameOfFigureByIDFromInstList(String id) {
-
         for (Figure f : instFig) {
             if (f.getId().equals(id)) {
                 return f.getName();
             }
         }
-
         return "";
-
     }
 
+    /**
+     * 
+     * @param id
+     * @return 
+     */
     private String findNameOfFigureByIDFromRefList(String id) {
-
         for (Figure f : refFig) {
             if (f.getId().equals(id)) {
                 return f.getName();
             }
         }
-
         return "";
-
     }
 
+    /**
+     * 
+     * @param solution 
+     */
     //Nur sources n childs nötig
     private void printSolutionToFile(ArrayList<String> solution) {
         try {
@@ -485,19 +541,29 @@ public class XMLFileReader {
             }
             bw.flush();
             bw.close();
-
         } catch (IOException ex) {
             Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
+    /**
+     * Build the Solution doc after reading Reference and Instance, you need first get the Changes Lists and the differend compare Lists.
+     * readFiles();
+     * parseFigures();
+     * checkChanges();
+     * in this order
+     * @return 
+     */
     public ArrayList<String> buildSolution() {
+        
+        //Zu beginn wird zunächst das solutionDoc auf das InstDoc gesetzt und mit Informationen angereichert
         ArrayList<String> solutionDoc = instDoc;
 
+        
         String relStart = "<folder name=\"Relations\"";
         String relEnd = "<folder name=\"Views\"";
 
+        //Zunächst werden alle Figurs aus der ref_Fig_change (alle Figurs welche nicht in der inst liste aber in der ref liste sind) Liste in das Solution doc mit eingefügt 
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure f = ref_fig_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
@@ -524,12 +590,14 @@ public class XMLFileReader {
 
             }
         }
+        
+        //Schreibt alle Relations aus der ref_rel_changes (alle Relations welche in ref aber nicht in inst sind) in die Solution Doc an die richtige Stelle
         for (int i = 0; i < ref_rel_changes.size(); i++) {
             Relation r = ref_rel_changes.get(i);
             boolean beginRel = false;
             for (int j = 0; j < solutionDoc.size(); j++) {
                 String oneSolLine = solutionDoc.get(j);
-                
+
                 if (oneSolLine.contains(relStart)) {
                     beginRel = true;
                 }
@@ -554,6 +622,8 @@ public class XMLFileReader {
 
             }
         }
+        
+        //Färbt alle Childs Grün in welcher nur in den Inst Figures vorhanden sind.
         for (int i = 0; i < inst_fig_changes.size(); i++) {
             Figure f = inst_fig_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
@@ -580,6 +650,7 @@ public class XMLFileReader {
             }
         }
 
+        //Färbt alle SourceConnection Grün, welche nur in den Inst Relationen zu finden sind.
         for (int i = 0; i < inst_rel_changes.size(); i++) {
             Relation r = inst_rel_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
@@ -603,6 +674,7 @@ public class XMLFileReader {
             }
         }
 
+        //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde ligen die nur in Ref aber nicht in Inst sind.
         for (int i = 0; i < ref_fig_changes.size(); i++) {
 
             Figure f = ref_fig_changes.get(i);
@@ -661,6 +733,7 @@ public class XMLFileReader {
 
         }
 
+        //Fügt alle SourceConnections hinzu welche die RefRelations beinhalten welche nicht in Int sind.
         for (int i = 0; i < ref_rel_changes.size(); i++) {
             Relation r = ref_rel_changes.get(i);
             for (int j = 0; j < allRefSourceConnections.size(); j++) {
@@ -673,9 +746,9 @@ public class XMLFileReader {
                             Pattern pat = Pattern.compile(NAMEREGEX);
                             Matcher mat = pat.matcher(oneSolutionLine);
                             if (mat.find()) {
-                                    if(s.getChildID().equals(mat.group(1))){
-                                        solutionDoc.add(k + 2, s.getConnectionLine());
-                                    }
+                                if (s.getChildID().equals(mat.group(1))) {
+                                    solutionDoc.add(k + 2, s.getConnectionLine());
+                                }
                             }
                         }
 
@@ -689,6 +762,11 @@ public class XMLFileReader {
         return solutionDoc;
     }
 
+    /**
+     * 
+     * @param line
+     * @return 
+     */
     public String getLineWithOtherID(String line) {
 
         Pattern pat = Pattern.compile("id=\"(.*?)\"");
@@ -701,6 +779,13 @@ public class XMLFileReader {
         return line;
     }
 
+    /**
+     * 
+     * @param line
+     * @param color
+     * @param type
+     * @return 
+     */
     public String getLineInsertLineColor(String line, int color, int type) {
 
         String colString = "";
@@ -727,18 +812,34 @@ public class XMLFileReader {
         return line;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public File getRefFile() {
         return refFile;
     }
 
+    /**
+     * 
+     * @param refFile 
+     */
     public void setRefFile(File refFile) {
         this.refFile = refFile;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public File getInstFile() {
         return instFile;
     }
 
+    /**
+     * 
+     * @param instFile 
+     */
     public void setInstFile(File instFile) {
         this.instFile = instFile;
     }
