@@ -17,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.xml.sax.SAXException;
 
 /**
  *
@@ -81,9 +80,9 @@ public class XMLFileReader {
     }
 
     /**
-     * This Method read the two Files wich are will be compared.
-     * The refDoc File is the Reference for the other File
-     * The instDoc File ist the Instance wich is created with Reference as Template
+     * This Method read the two Files wich are will be compared. The refDoc File
+     * is the Reference for the other File The instDoc File ist the Instance
+     * wich is created with Reference as Template
      */
     private void readFiles() {
 
@@ -131,9 +130,9 @@ public class XMLFileReader {
         //Erzeugt eine Liste in welcher die Relations aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
         patternSearchRelations(instDoc, INST);
         //Erzeugt eine Liste aller Childs aus der refDoc Liste. Um Später die Childs heraus zu filtern welche nicht in der instDoc Liste vorhanden sind. In der Solution dann Rot eingefärbt.
-        patternSearchChileds(refDoc, REF);
+        patternSearchChilds(refDoc, REF);
         //Erzeugt eine Liste aller Childs aus der instDoc Liste.
-        patternSearchChileds(instDoc, INST);
+        patternSearchChilds(instDoc, INST);
         //Erzeugt eine Liste aller SourceConnection aus der refDoc Liste um die SourceConnection in die SolutionListe zu schreiben welche nicht in der instDoc Liste vorhanden sind.
         patternSearchSourceConnection(refDoc, REF);
         //Noch nicht benutzt bisher.
@@ -142,12 +141,13 @@ public class XMLFileReader {
 
     /**
      * Reads all Childs from xml Archimate List
+     *
      * @param docList StingArray from Archimate XML List
-     * @param listType Typ REF or INST, REF writes the allRefChilds and INST the allInstChilds List.
+     * @param listType Typ REF or INST, REF writes the allRefChilds and INST the
+     * allInstChilds List.
      */
-    private void patternSearchChileds(ArrayList<String> docList, int listType) {
+    private void patternSearchChilds(ArrayList<String> docList, int listType) {
 
-        
         //String regex für verschiedene vergleiche von String Lines
         final String START_FIG = "<folder name=\"Views\"";
         final String ELSELECTOR = "element xsi";
@@ -160,13 +160,13 @@ public class XMLFileReader {
 
         //Um in einem Child zu Speichern zu welcher View dieses gehört
         String currentViewName = "";
-       
+
         //Zählt das lesen von Child lines um die richtige anzahl von Child Ende lines zu erzeugen und weit genug zu lesen.
         int childCounter = 0;
-        
+
         //beginnt erst zu lesen wenn die View in der xml begonnen hat
         boolean inView = false;
-        
+
         //Liest weiter sobald ein Child beginnt um die einzelnen Childs komplett zu lesen.
         boolean isInChild = false;
 
@@ -174,12 +174,12 @@ public class XMLFileReader {
 
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
-            
+
             //Prüft ob die View startet
             if (oneLine.contains(START_FIG)) {
                 inView = true;
             }
-            
+
             //Sobald in der View
             if (inView) {
                 //Prüft ob eine neue View startet und schreibt den wert in currentViewname
@@ -204,7 +204,7 @@ public class XMLFileReader {
                     }
                     isInChild = true;
                 }
-                
+
                 //Prüft ob man sich gerade in einem Child befindet
                 if (isInChild) {
                     if (oneLine.contains(SOURCECONNECTION)) {
@@ -216,7 +216,7 @@ public class XMLFileReader {
 
                     }
                     child.getchildlines().add(oneLine);
-                    
+
                     //Sobald ein Childende tag auftaucht wird überprüft ob es das letzte in diesem Child ist und falls ja wird in die jeweilige nach Typdefinierte Liste geschrieben.
                     if (oneLine.contains(CHILDEND)) {
                         childCounter--;
@@ -238,15 +238,16 @@ public class XMLFileReader {
         }
     }
 
-    
     /**
      * Reads all SourceConnection from XML Archimate List
+     *
      * @param docList StingArray from Archimate XML List
-     * @param listType Typ REF or INST, REF writes the allRefSourceConnections and INST the allInstSourceConnections List.
+     * @param listType Typ REF or INST, REF writes the allRefSourceConnections
+     * and INST the allInstSourceConnections List.
      */
     private void patternSearchSourceConnection(ArrayList<String> docList, int listType) {
 
-         //String regex für verschiedene vergleiche von String Lines
+        //String regex für verschiedene vergleiche von String Lines
         final String START_FIG = "<folder name=\"Views\"";
         final String IDPEREGEX = "id=\"(.*?)\"";
         final String SOURCESTART = "sourceConnection xsi";
@@ -255,7 +256,7 @@ public class XMLFileReader {
 
         //Speichert die Childe ID in welcher man sich gerade befindet
         String childeID = "";
-        
+
         //beginnt erst zu lesen wenn die View in der xml begonnen hat
         boolean inView = false;
 
@@ -309,9 +310,10 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param docList StingArray from Archimate XML List
-     * @param listType Typ REF or INST, REF writes the refRel and INST the instRel List.
+     * @param listType Typ REF or INST, REF writes the refRel and INST the
+     * instRel List.
      */
     private void patternSearchRelations(ArrayList<String> docList, int listType) {
 
@@ -396,9 +398,10 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param docList StingArray from Archimate XML List
-     * @param listType Typ REF or INST, REF writes the refFig and INST the instFig List.
+     * @param listType Typ REF or INST, REF writes the refFig and INST the
+     * instFig List.
      */
     private void patternSearchFigures(ArrayList<String> docList, int listType) {
         //Stopp bei:
@@ -457,7 +460,8 @@ public class XMLFileReader {
     }
 
     /**
-     * Writes some differend Changes betwenn ref and inst compared by figures and relations
+     * Writes some differend Changes betwenn ref and inst compared by oneInstFig
+     * and relations
      */
     private void checkChanges() {
         ref_fig_changes = (ArrayList<Figure>) createChangeList(refFig, instFig);
@@ -468,17 +472,20 @@ public class XMLFileReader {
 
     /**
      * Print a Line of String so Console for Debugging oder Logging
-     * @param toPrint 
+     *
+     * @param toPrint
      */
     public void print(String toPrint) {
         System.out.println(toPrint);
     }
 
     /**
-     * Create an Change List of two ArrayLists comparte by equals Method of a Class
+     * Create an Change List of two ArrayLists comparte by equals Method of a
+     * Class
+     *
      * @param refList
      * @param instList
-     * @return 
+     * @return
      */
     private ArrayList<?> createChangeList(ArrayList<?> refList, ArrayList<?> instList) {
         //Ref Figs -- Inst Figs / CIS -- CRS
@@ -500,9 +507,9 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param id
-     * @return 
+     * @return
      */
     private String findNameOfFigureByIDFromInstList(String id) {
         for (Figure f : instFig) {
@@ -514,9 +521,9 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param id
-     * @return 
+     * @return
      */
     private String findNameOfFigureByIDFromRefList(String id) {
         for (Figure f : refFig) {
@@ -528,8 +535,8 @@ public class XMLFileReader {
     }
 
     /**
-     * 
-     * @param solution 
+     *
+     * @param solution
      */
     //Nur sources n childs nötig
     private void printSolutionToFile(ArrayList<String> solution) {
@@ -547,42 +554,45 @@ public class XMLFileReader {
     }
 
     /**
-     * Build the Solution doc after reading Reference and Instance, you need first get the Changes Lists and the differend compare Lists.
-     * readFiles();
-     * parseFigures();
-     * checkChanges();
-     * in this order
-     * @return 
+     * Build the Solution doc after reading Reference and Instance, you need
+     * first get the Changes Lists and the differend compare Lists. readFiles();
+     * parseFigures(); checkChanges(); in this order
+     *
+     * @return
      */
     public ArrayList<String> buildSolution() {
-        
+
         //Zu beginn wird zunächst das solutionDoc auf das InstDoc gesetzt und mit Informationen angereichert
         ArrayList<String> solutionDoc = instDoc;
 
-        
         String relStart = "<folder name=\"Relations\"";
         String relEnd = "<folder name=\"Views\"";
 
+        //REF Figures
         //Zunächst werden alle Figurs aus der ref_Fig_change (alle Figurs welche nicht in der inst liste aber in der ref liste sind) Liste in das Solution doc mit eingefügt 
         for (int i = 0; i < ref_fig_changes.size(); i++) {
-            Figure f = ref_fig_changes.get(i);
-            for (int j = 0; j < solutionDoc.size(); j++) {
-                String oneSolLine = solutionDoc.get(j);
+            Figure oneRefFig = ref_fig_changes.get(i);
+            for (int solLineCount = 0; solLineCount < solutionDoc.size(); solLineCount++) {
+                String oneSolLine = solutionDoc.get(solLineCount);
                 boolean inFig = true;
+
+                //Start bei Instanz Figures, Ende bei Instanz Relations
                 if (inFig) {
                     if (oneSolLine.contains(relStart)) {
                         inFig = false;
                     }
-                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(f.getFolder())) {
+                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(oneRefFig.getFolder())) {
                         boolean idExist = false;
-                        for (Figure figures : instFig) {
-                            if (figures.getId().equals(f.getId())) {
+                        //Prüfen ob IDs aus Instanz und Referenz gleich (bereits da), ansonsten ID anpassen und hinzufügen
+                        for (Figure oneInstFig : instFig) {
+                            if (oneInstFig.getId().equals(oneRefFig.getId())) {
                                 idExist = true;
-                                solutionDoc.add(j + 1, getLineWithOtherID(f.getLine()));
+                                solutionDoc.add(solLineCount + 1, getLineWithOtherID(oneRefFig.getLine()));
                             }
                         }
+                        //Id noch nicht vorhanden, also Änderung einfach so adden
                         if (!idExist) {
-                            solutionDoc.add(j + 1, f.getLine());
+                            solutionDoc.add(solLineCount + 1, oneRefFig.getLine());
                         }
                     }
 
@@ -590,31 +600,37 @@ public class XMLFileReader {
 
             }
         }
-        
+
+        //REF Relations
         //Schreibt alle Relations aus der ref_rel_changes (alle Relations welche in ref aber nicht in inst sind) in die Solution Doc an die richtige Stelle
         for (int i = 0; i < ref_rel_changes.size(); i++) {
-            Relation r = ref_rel_changes.get(i);
+            Relation oneRefRel = ref_rel_changes.get(i);
+
             boolean beginRel = false;
             for (int j = 0; j < solutionDoc.size(); j++) {
                 String oneSolLine = solutionDoc.get(j);
 
+                //Start bei "Relations"
                 if (oneSolLine.contains(relStart)) {
                     beginRel = true;
                 }
+                //Ende bei "Views"
                 if (oneSolLine.contains(relEnd)) {
                     beginRel = false;
                 }
                 if (beginRel) {
-                    if (oneSolLine.contains("folder name") && oneSolLine.contains(r.getFolder())) {
+                    if (oneSolLine.contains("<folder name") && oneSolLine.contains(oneRefRel.getFolder())) {
                         boolean idExist = false;
-                        for (Relation relation : instRel) {
-                            if (relation.getId().equals(r.getId())) {
+                        //Prüfen ob IDs aus Instanz und Referenz gleich (bereits da), ansonsten ID anpassen und hinzufügen
+                        for (Relation oneInstRel : instRel) {
+                            if (oneInstRel.getId().equals(oneRefRel.getId())) {
                                 idExist = true;
-                                solutionDoc.add(j + 1, getLineWithOtherID(r.getLine()));
+                                solutionDoc.add(j + 1, getLineWithOtherID(oneRefRel.getLine()));
                             }
                         }
+                        //Id noch nicht vorhanden, also Änderung einfach so adden
                         if (!idExist) {
-                            solutionDoc.add(j + 1, r.getLine());
+                            solutionDoc.add(j + 1, oneRefRel.getLine());
                         }
                     }
 
@@ -622,20 +638,21 @@ public class XMLFileReader {
 
             }
         }
-        
-        //Färbt alle Childs Grün in welcher nur in den Inst Figures vorhanden sind.
+
+        //Färbt alle Childs Grün die NUR in den Inst Figures vorhanden sind.
         for (int i = 0; i < inst_fig_changes.size(); i++) {
-            Figure f = inst_fig_changes.get(i);
+            Figure oneInstFig = inst_fig_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
                 String solutionLine = solutionDoc.get(j);
+
                 if (solutionLine.contains("child xsi")) {
                     Pattern pat = Pattern.compile("archimateElement=\"(.*?)\"");
                     Matcher mat = pat.matcher(solutionLine);
                     if (mat.find()) {
-                        if (mat.group(1).equals(f.getId())) {
+                        //Prüfung: archimateElement aus Childs == ID aus Figures
+                        if (mat.group(1).equals(oneInstFig.getId())) {
 
                             if (solutionLine.contains("fillColor")) {
-                                //solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00ff00\"");
                                 solutionLine = solutionLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#00FF00\"");
 
                             } else {
@@ -650,16 +667,18 @@ public class XMLFileReader {
             }
         }
 
-        //Färbt alle SourceConnection Grün, welche nur in den Inst Relationen zu finden sind.
+        //Färbt alle SourceConnection Grün, welche NUR in den Inst Relationen zu finden sind.
         for (int i = 0; i < inst_rel_changes.size(); i++) {
-            Relation r = inst_rel_changes.get(i);
+            Relation oneInstRel = inst_rel_changes.get(i);
             for (int j = 0; j < solutionDoc.size(); j++) {
                 String solutionLine = solutionDoc.get(j);
+
                 if (solutionLine.contains("sourceConnection xsi")) {
                     Pattern pat = Pattern.compile("relationship=\"(.*?)\"");
                     Matcher mat = pat.matcher(solutionLine);
                     if (mat.find()) {
-                        if (mat.group(1).equals(r.getId())) {
+                        //Prüfung: relationship aus Childs == ID aus Relations
+                        if (mat.group(1).equals(oneInstRel.getId())) {
                             if (solutionLine.contains("lineColor")) {
                                 solutionLine = solutionLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#00FF00\"");
                             } else {
@@ -674,17 +693,19 @@ public class XMLFileReader {
             }
         }
 
-        //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde ligen die nur in Ref aber nicht in Inst sind.
+        //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde liegen, die nur in Ref aber nicht in Inst sind.
         for (int i = 0; i < ref_fig_changes.size(); i++) {
-
-            Figure f = ref_fig_changes.get(i);
+            Figure oneRefFig = ref_fig_changes.get(i);
             for (int j = 0; j < allRefChilds.size(); j++) {
-                Child ch = allRefChilds.get(j);
-                if (ch.getArchimateElementID() != null && ch.getArchimateElementID().equals(f.getId())) {
+                Child oneRefChild = allRefChilds.get(j);
+
+                //Child ID überhaupt vorhanden, Child archimateElement == ID aus Figures
+                if (oneRefChild.getArchimateElementID() != null && oneRefChild.getArchimateElementID().equals(oneRefFig.getId())) {
                     boolean inView = false;
                     for (int k = 0; k < solutionDoc.size(); k++) {
                         String solutionLine = solutionDoc.get(k);
 
+                        //Nur durch Childs bzw. View
                         if (solutionLine.contains(relEnd)) {
                             inView = true;
                         }
@@ -694,12 +715,14 @@ public class XMLFileReader {
                                 Pattern pat = Pattern.compile(NAMEREGEX);
                                 Matcher mat = pat.matcher(solutionLine);
                                 if (mat.find()) {
-                                    if (mat.group(1).equals(ch.getViewObjekt())) {
 
-                                        ArrayList<String> childLines = ch.getchildlines();
+                                    //View Name gleich? (zB. name="Archimate View")
+                                    if (mat.group(1).equals(oneRefChild.getViewObjekt())) {
+                                        ArrayList<String> childLines = oneRefChild.getchildlines();
+
+                                        //Child Lines rot färben, 
                                         if (!childLines.isEmpty()) {
                                             for (int l = childLines.size() - 1; l >= 0; l--) {
-                                                //färben
                                                 String oneChildLine = childLines.get(l);
                                                 if (l == 0) {
                                                     if (oneChildLine.contains("fillColor")) {
@@ -763,9 +786,9 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param line
-     * @return 
+     * @return
      */
     public String getLineWithOtherID(String line) {
 
@@ -780,11 +803,11 @@ public class XMLFileReader {
     }
 
     /**
-     * 
+     *
      * @param line
      * @param color
      * @param type
-     * @return 
+     * @return
      */
     public String getLineInsertLineColor(String line, int color, int type) {
 
@@ -813,32 +836,32 @@ public class XMLFileReader {
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return
      */
     public File getRefFile() {
         return refFile;
     }
 
     /**
-     * 
-     * @param refFile 
+     *
+     * @param refFile
      */
     public void setRefFile(File refFile) {
         this.refFile = refFile;
     }
 
     /**
-     * 
-     * @return 
+     *
+     * @return
      */
     public File getInstFile() {
         return instFile;
     }
 
     /**
-     * 
-     * @param instFile 
+     *
+     * @param instFile
      */
     public void setInstFile(File instFile) {
         this.instFile = instFile;
