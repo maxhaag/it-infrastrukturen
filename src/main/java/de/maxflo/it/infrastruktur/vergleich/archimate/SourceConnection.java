@@ -56,7 +56,10 @@ public class SourceConnection {
         this.relationship = relationship;
     }
 
-    
-    
+    @Override
+    public String toString() {
+        return "SourceConnection{" + "id=" + id + ", connectionLine=" + connectionLine + ", childID=" + childID + ", relationship=" + relationship + '}';
+    }
+
     
 }

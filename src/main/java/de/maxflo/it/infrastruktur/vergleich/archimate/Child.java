@@ -103,7 +103,7 @@ public class Child {
 
     @Override
     public String toString() {
-        return "Childe{" + "archimateElementID=" + archimateElementID + ", relationshipIDs=" + relationshipIDs + ", childlines=" + childlines + ", viewObjekt=" + viewObjekt + '}';
+        return "Child{" + "archimateElementID=" + archimateElementID + ", relationshipIDs=" + relationshipIDs + ", childlines=" + childlines + ", viewObjekt=" + viewObjekt + '}';
     }
     
     

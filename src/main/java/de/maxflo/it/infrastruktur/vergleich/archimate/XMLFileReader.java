@@ -137,9 +137,14 @@ public class XMLFileReader {
         patternSearchSourceConnection(refDoc, REF);
         //Noch nicht benutzt bisher.
         patternSearchSourceConnection(instDoc, INST);
+
     }
 
     /**
+     *
+     * DEBUG_UPDATE (MAX) 06.05.2016: ViewElement bzw. "name" nach Views NULL.
+     * Sollte aber auch so gehen da wir die ja nicht brauchen...
+     *
      * Reads all Childs from xml Archimate List
      *
      * @param docList StingArray from Archimate XML List
@@ -151,7 +156,7 @@ public class XMLFileReader {
         //String regex für verschiedene vergleiche von String Lines
         final String START_FIG = "<folder name=\"Views\"";
         final String ELSELECTOR = "element xsi";
-        final String NAMEPEREGEX = "name=\"(.*?)\"";
+        final String VIEW_NAME_REGEX = "name=\"(.*?)\"";
         final String CHILDSTART = "child xsi";
         final String CHILDEND = "/child";
         final String ARCHIELEMENTID = "archimateElement=\"(.*?)\"";
@@ -172,6 +177,7 @@ public class XMLFileReader {
 
         Child child = new Child();
 
+        //Gesamtes Doc.
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
 
@@ -185,10 +191,11 @@ public class XMLFileReader {
                 //Prüft ob eine neue View startet und schreibt den wert in currentViewname
                 if (oneLine.contains(ELSELECTOR)) {
 
-                    Pattern pat = Pattern.compile(NAMEPEREGEX);
+                    Pattern pat = Pattern.compile(VIEW_NAME_REGEX);
                     Matcher mat = pat.matcher(oneLine);
                     if (mat.find()) {
-                        currentViewName = mat.group(1);
+                        String viewElement = mat.group(1);
+                        currentViewName = viewElement;
                     }
                     continue;
                 }
@@ -196,12 +203,16 @@ public class XMLFileReader {
                 //Prüft ob ein Child startet
                 if (oneLine.contains(CHILDSTART)) {
                     childCounter++;
-                    Pattern pat = Pattern.compile(ARCHIELEMENTID);
-                    Matcher mat = pat.matcher(oneLine);
-                    if (mat.find()) {
-                        child.setArchimateElementID(mat.group(1));
+
+                    Pattern idPat = Pattern.compile(ARCHIELEMENTID);
+                    Matcher idMat = idPat.matcher(oneLine);
+                    if (idMat.find()) {
+                        String archiMateElementId = idMat.group(1);
+                        child.setArchimateElementID(archiMateElementId);
                         child.setViewObjekt(currentViewName);
                     }
+
+                    //child.setViewObjekt(currentViewName);
                     isInChild = true;
                 }
 
@@ -215,6 +226,7 @@ public class XMLFileReader {
                         }
 
                     }
+
                     child.getchildlines().add(oneLine);
 
                     //Sobald ein Childende tag auftaucht wird überprüft ob es das letzte in diesem Child ist und falls ja wird in die jeweilige nach Typdefinierte Liste geschrieben.
@@ -568,13 +580,14 @@ public class XMLFileReader {
         String relStart = "<folder name=\"Relations\"";
         String relEnd = "<folder name=\"Views\"";
 
-        //REF Figures
+        //Fehlende Ref Figures in DOC in richtigen "folder" einfügen
         //Zunächst werden alle Figurs aus der ref_Fig_change (alle Figurs welche nicht in der inst liste aber in der ref liste sind) Liste in das Solution doc mit eingefügt 
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure oneRefFig = ref_fig_changes.get(i);
+
+            boolean inFig = true;
             for (int solLineCount = 0; solLineCount < solutionDoc.size(); solLineCount++) {
                 String oneSolLine = solutionDoc.get(solLineCount);
-                boolean inFig = true;
 
                 //Start bei Instanz Figures, Ende bei Instanz Relations
                 if (inFig) {
@@ -588,6 +601,7 @@ public class XMLFileReader {
                             if (oneInstFig.getId().equals(oneRefFig.getId())) {
                                 idExist = true;
                                 solutionDoc.add(solLineCount + 1, getLineWithOtherID(oneRefFig.getLine()));
+
                             }
                         }
                         //Id noch nicht vorhanden, also Änderung einfach so adden
@@ -693,6 +707,12 @@ public class XMLFileReader {
             }
         }
 
+        //TODO
+        //MAX: 06.05.2016
+        //Wenn zN lineColor gar nicht vorhanden addet er beides...
+        //Wir nehmen bereits die INST Doc und fügen noch alles dazu
+        //Er macht auch nicht immer ein neues CHild .....to be done
+        
         //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde liegen, die nur in Ref aber nicht in Inst sind.
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure oneRefFig = ref_fig_changes.get(i);
@@ -703,6 +723,7 @@ public class XMLFileReader {
                 if (oneRefChild.getArchimateElementID() != null && oneRefChild.getArchimateElementID().equals(oneRefFig.getId())) {
                     boolean inView = false;
                     for (int k = 0; k < solutionDoc.size(); k++) {
+
                         String solutionLine = solutionDoc.get(k);
 
                         //Nur durch Childs bzw. View
@@ -717,13 +738,18 @@ public class XMLFileReader {
                                 if (mat.find()) {
 
                                     //View Name gleich? (zB. name="Archimate View")
-                                    if (mat.group(1).equals(oneRefChild.getViewObjekt())) {
+                                    String viewElementInst = mat.group(1);
+                                    if (viewElementInst.equals(oneRefChild.getViewObjekt())) {
                                         ArrayList<String> childLines = oneRefChild.getchildlines();
 
                                         //Child Lines rot färben, 
                                         if (!childLines.isEmpty()) {
                                             for (int l = childLines.size() - 1; l >= 0; l--) {
                                                 String oneChildLine = childLines.get(l);
+                                               
+                                                
+                                                //print(oneChildLine);
+                                                
                                                 if (l == 0) {
                                                     if (oneChildLine.contains("fillColor")) {
                                                         oneChildLine = oneChildLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#FF0000\"");
@@ -738,8 +764,10 @@ public class XMLFileReader {
                                                         oneChildLine = getLineInsertLineColor(oneChildLine, COLOR_RED, LINE_COL);
                                                     }
                                                 }
-                                                solutionDoc.add(k + 1, oneChildLine);
-
+                                                //old
+                                                //solutionDoc.add(k + 1, oneChildLine);
+                                                solutionDoc.add(k+1, oneChildLine);
+                                                //solutionDoc.remove(k+1);
                                             }
                                         }
 
@@ -782,7 +810,19 @@ public class XMLFileReader {
 
         }
 
+        //debugPrint(allRefChilds);
         return solutionDoc;
+    }
+
+    private void debugPrint(ArrayList<?> toPrintList) {
+        for (int i = 0; i < toPrintList.size(); i++) {
+            String oneLine = toPrintList.get(i).toString();
+            //
+            if (oneLine.contains(".............")) {
+                System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXX");
+            }
+            System.out.println(toPrintList.get(i));
+        }
     }
 
     /**
