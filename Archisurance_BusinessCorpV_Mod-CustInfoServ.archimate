@@ -73,6 +73,7 @@
       <element xsi:type="archimate:Value" id="1250" name="Be Insured"/>
       <element xsi:type="archimate:Contract" id="1239" name="Travel Insurance Policy"/>
       <element xsi:type="archimate:BusinessService" id="1208" name="Premium Payment Service"/>
+
       <element xsi:type="archimate:BusinessService" id="1202" name="Claim Registration Service"/>
       <element xsi:type="archimate:BusinessService" id="1196" name="Insurance Application Service"/>
       <element xsi:type="archimate:BusinessService" id="1226" name="Claims Payment Service"/>
@@ -148,6 +149,7 @@
   <folder name="Relations" id="408ff6d3" type="relations">
     <folder name="Business" id="10ad9578">
       <folder name="Processes" id="aedae54a">
+
         <element xsi:type="archimate:AccessRelationship" id="693" name="create/ update" source="564" target="674"/>
         <element xsi:type="archimate:AccessRelationship" id="697" name="create/ update" source="564" target="673"/>
         <element xsi:type="archimate:AccessRelationship" id="708" name="crud" source="580" target="673"/>
@@ -261,6 +263,7 @@
         <element xsi:type="archimate:FlowRelationship" id="1782" name="product info." source="471" target="507"/>
       </folder>
       <folder name="Products" id="c122a424">
+
         <element xsi:type="archimate:AssociationRelationship" id="1274" source="1250" target="1208"/>
         <element xsi:type="archimate:UsedByRelationship" id="1295" source="1226" target="521"/>
         <element xsi:type="archimate:UsedByRelationship" id="1293" source="1202" target="521"/>

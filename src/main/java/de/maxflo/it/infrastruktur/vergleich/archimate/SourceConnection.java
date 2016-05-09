@@ -16,6 +16,7 @@ public class SourceConnection {
     
     private String id;
     private String connectionLine;
+    private String target;
     private String childID;
     private String relationship;
 
@@ -56,10 +57,20 @@ public class SourceConnection {
         this.relationship = relationship;
     }
 
-    @Override
-    public String toString() {
-        return "SourceConnection{" + "id=" + id + ", connectionLine=" + connectionLine + ", childID=" + childID + ", relationship=" + relationship + '}';
+    public String getTarget() {
+        return target;
     }
 
+    public void setTarget(String target) {
+        this.target = target;
+    }
+
+    @Override
+    public String toString() {
+        return "SourceConnection{" + "id=" + id + ", connectionLine=" + connectionLine + ", target=" + target + ", childID=" + childID + ", relationship=" + relationship + '}';
+    }
+
+    
+    
     
 }

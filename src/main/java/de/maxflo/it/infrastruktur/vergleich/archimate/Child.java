@@ -14,7 +14,7 @@ import java.util.Objects;
  */
 public class Child {
     
-    
+    private String childeID;
     private String archimateElementID;
     private ArrayList<String> relationshipIDs;
     private ArrayList<String> childlines;
@@ -25,11 +25,22 @@ public class Child {
         childlines = new ArrayList<>();
     }
 
-    public Child(String archimateElementID, ArrayList<String> relationshipIDs, ArrayList<String> childlines, String viewObjekt) {
+    public Child(String childeID, String archimateElementID, ArrayList<String> relationshipIDs, ArrayList<String> childlines, String viewObjekt) {
+        this.childeID = childeID;
         this.archimateElementID = archimateElementID;
         this.relationshipIDs = relationshipIDs;
         this.childlines = childlines;
         this.viewObjekt = viewObjekt;
+    }
+    
+    
+
+    public String getChildeID() {
+        return childeID;
+    }
+
+    public void setChildeID(String childeID) {
+        this.childeID = childeID;
     }
 
     public String getArchimateElementID() {
@@ -48,11 +59,11 @@ public class Child {
         this.relationshipIDs = relationshipIDs;
     }
 
-    public ArrayList<String> getchildlines() {
+    public ArrayList<String> getChildlines() {
         return childlines;
     }
 
-    public void setchildlines(ArrayList<String> childlines) {
+    public void setChildlines(ArrayList<String> childlines) {
         this.childlines = childlines;
     }
 
@@ -66,11 +77,11 @@ public class Child {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 59 * hash + Objects.hashCode(this.archimateElementID);
-        hash = 59 * hash + Objects.hashCode(this.relationshipIDs);
-        hash = 59 * hash + Objects.hashCode(this.childlines);
-        hash = 59 * hash + Objects.hashCode(this.viewObjekt);
+        int hash = 3;
+        hash = 53 * hash + Objects.hashCode(this.archimateElementID);
+        hash = 53 * hash + Objects.hashCode(this.relationshipIDs);
+        hash = 53 * hash + Objects.hashCode(this.childlines);
+        hash = 53 * hash + Objects.hashCode(this.viewObjekt);
         return hash;
     }
 
@@ -103,8 +114,9 @@ public class Child {
 
     @Override
     public String toString() {
-        return "Child{" + "archimateElementID=" + archimateElementID + ", relationshipIDs=" + relationshipIDs + ", childlines=" + childlines + ", viewObjekt=" + viewObjekt + '}';
+        return "Child{" + "childeID=" + childeID + ", archimateElementID=" + archimateElementID + ", relationshipIDs=" + relationshipIDs + ", childlines=" + childlines + ", viewObjekt=" + viewObjekt + '}';
     }
-    
+
+   
     
 }

@@ -162,6 +162,7 @@ public class XMLFileReader {
         final String ARCHIELEMENTID = "archimateElement=\"(.*?)\"";
         final String SOURCECONNECTION = "sourceConnection xsi";
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
+        final String IDPEREGEX = "id=\"(.*?)\"";
 
         //Um in einem Child zu Speichern zu welcher View dieses gehört
         String currentViewName = "";
@@ -202,18 +203,24 @@ public class XMLFileReader {
 
                 //Prüft ob ein Child startet
                 if (oneLine.contains(CHILDSTART)) {
-                    childCounter++;
 
                     Pattern idPat = Pattern.compile(ARCHIELEMENTID);
                     Matcher idMat = idPat.matcher(oneLine);
                     if (idMat.find()) {
+                        childCounter++;
                         String archiMateElementId = idMat.group(1);
                         child.setArchimateElementID(archiMateElementId);
                         child.setViewObjekt(currentViewName);
+
+                        //child.setViewObjekt(currentViewName);
+                        isInChild = true;
+                        idPat = Pattern.compile(IDPEREGEX);
+                        idMat = idPat.matcher(oneLine);
+                        if (idMat.find()) {
+                            child.setChildeID(idMat.group(1));
+                        }
                     }
 
-                    //child.setViewObjekt(currentViewName);
-                    isInChild = true;
                 }
 
                 //Prüft ob man sich gerade in einem Child befindet
@@ -226,9 +233,7 @@ public class XMLFileReader {
                         }
 
                     }
-
-                    child.getchildlines().add(oneLine);
-
+                    child.getChildlines().add(oneLine);
                     //Sobald ein Childende tag auftaucht wird überprüft ob es das letzte in diesem Child ist und falls ja wird in die jeweilige nach Typdefinierte Liste geschrieben.
                     if (oneLine.contains(CHILDEND)) {
                         childCounter--;
@@ -265,6 +270,7 @@ public class XMLFileReader {
         final String SOURCESTART = "sourceConnection xsi";
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
         final String CHILDSTART = "child xsi";
+        final String TARGETREGEX = "target=\"(.*?)\"";
 
         //Speichert die Childe ID in welcher man sich gerade befindet
         String childeID = "";
@@ -303,6 +309,11 @@ public class XMLFileReader {
                         Matcher matRel = patRel.matcher(oneLine);
                         if (matRel.find()) {
                             source.setRelationship(matRel.group(1));
+                        }
+                        patRel = Pattern.compile(TARGETREGEX);
+                        matRel = patRel.matcher(oneLine);
+                        if (matRel.find()) {
+                            source.setTarget(matRel.group(1));
                         }
                     }
                     if (listType == INST) {
@@ -712,8 +723,9 @@ public class XMLFileReader {
         //Wenn zN lineColor gar nicht vorhanden addet er beides...
         //Wir nehmen bereits die INST Doc und fügen noch alles dazu
         //Er macht auch nicht immer ein neues CHild .....to be done
-        
         //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde liegen, die nur in Ref aber nicht in Inst sind.
+        ArrayList<String> listOfChildIDwichAddedToSolution = new ArrayList<>();
+
         for (int i = 0; i < ref_fig_changes.size(); i++) {
             Figure oneRefFig = ref_fig_changes.get(i);
             for (int j = 0; j < allRefChilds.size(); j++) {
@@ -722,6 +734,9 @@ public class XMLFileReader {
                 //Child ID überhaupt vorhanden, Child archimateElement == ID aus Figures
                 if (oneRefChild.getArchimateElementID() != null && oneRefChild.getArchimateElementID().equals(oneRefFig.getId())) {
                     boolean inView = false;
+                    //Debug Zwecke kann gelöscht werden
+
+                    // Bis hier her löschen
                     for (int k = 0; k < solutionDoc.size(); k++) {
 
                         String solutionLine = solutionDoc.get(k);
@@ -740,16 +755,14 @@ public class XMLFileReader {
                                     //View Name gleich? (zB. name="Archimate View")
                                     String viewElementInst = mat.group(1);
                                     if (viewElementInst.equals(oneRefChild.getViewObjekt())) {
-                                        ArrayList<String> childLines = oneRefChild.getchildlines();
+                                        ArrayList<String> childLines = oneRefChild.getChildlines();
 
                                         //Child Lines rot färben, 
                                         if (!childLines.isEmpty()) {
                                             for (int l = childLines.size() - 1; l >= 0; l--) {
                                                 String oneChildLine = childLines.get(l);
-                                               
-                                                
+
                                                 //print(oneChildLine);
-                                                
                                                 if (l == 0) {
                                                     if (oneChildLine.contains("fillColor")) {
                                                         oneChildLine = oneChildLine.replaceAll("fillColor=\"(.*?)\"", "fillColor=" + "\"#FF0000\"");
@@ -766,7 +779,8 @@ public class XMLFileReader {
                                                 }
                                                 //old
                                                 //solutionDoc.add(k + 1, oneChildLine);
-                                                solutionDoc.add(k+1, oneChildLine);
+                                                listOfChildIDwichAddedToSolution.add(oneRefChild.getChildeID());
+                                                solutionDoc.add(k + 1, oneChildLine);
                                                 //solutionDoc.remove(k+1);
                                             }
                                         }
@@ -798,7 +812,18 @@ public class XMLFileReader {
                             Matcher mat = pat.matcher(oneSolutionLine);
                             if (mat.find()) {
                                 if (s.getChildID().equals(mat.group(1))) {
-                                    solutionDoc.add(k + 2, s.getConnectionLine());
+                                    if (!listOfChildIDwichAddedToSolution.contains(s.getChildID())) {
+                                        String oneSourceLine = s.getConnectionLine();
+                                        if (oneSourceLine.contains("sourceConnection xsi")) {
+
+                                            if (oneSourceLine.contains("lineColor")) {
+                                                oneSourceLine = oneSourceLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
+                                            } else {
+                                                oneSourceLine = getLineInsertLineColor(oneSourceLine, COLOR_RED, LINE_COL);
+                                            }
+                                        }
+                                        solutionDoc.add(k + 2, oneSourceLine);
+                                    }
                                 }
                             }
                         }
@@ -806,6 +831,41 @@ public class XMLFileReader {
                     }
                 }
 
+            }
+
+        }
+        for (int i = 0; i < ref_rel_changes.size(); i++) {
+            Relation r = ref_rel_changes.get(i);
+            for (int j = 0; j < allRefSourceConnections.size(); j++) {
+                SourceConnection s = allRefSourceConnections.get(j);
+                if (s.getRelationship().equals(r.getId())) {
+                    for (int k = 0; k < solutionDoc.size(); k++) {
+                        String oneSolutionLine = solutionDoc.get(k);
+                        if (oneSolutionLine.contains("child xsi")) {
+
+                            
+                            String TARGETREGEX = "targetConnections=\"(.*?)\"";
+                           
+                            String IDREGEX = "id=\"(.*?)\"";
+                            Pattern pat = Pattern.compile(IDREGEX);
+                            Matcher mat = pat.matcher(oneSolutionLine);
+                            if (mat.find()) {
+                                if (mat.group(1).equals(s.getTarget())) {
+                                    pat = Pattern.compile(TARGETREGEX);
+                                    mat = pat.matcher(oneSolutionLine);
+                                    if (mat.find()) {
+                                        if (!mat.group(1).contains(s.getId())) {
+                                            oneSolutionLine = oneSolutionLine.replaceAll("targetConnections=\"(.*?)\"", "targetConnections=" + "\"" + mat.group(1) + " " + s.getId() + "\"");
+                                            solutionDoc.add(k, oneSolutionLine);
+                                            solutionDoc.remove(k + 1);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
             }
 
         }
