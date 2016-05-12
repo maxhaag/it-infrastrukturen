@@ -5,6 +5,7 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -15,12 +16,13 @@ public class SourceConnection {
     
     
     private String id;
-    private String connectionLine;
+    private ArrayList<String> connectionLine;
     private String target;
     private String childID;
     private String relationship;
 
     public SourceConnection() {
+        connectionLine = new ArrayList<>();
     }
 
   
@@ -33,13 +35,15 @@ public class SourceConnection {
         this.id = id;
     }
 
-    public String getConnectionLine() {
+    public ArrayList<String> getConnectionLine() {
         return connectionLine;
     }
 
-    public void setConnectionLine(String connectionLine) {
+    public void setConnectionLine(ArrayList<String> connectionLine) {
         this.connectionLine = connectionLine;
     }
+
+   
 
     public String getChildID() {
         return childID;

@@ -54,14 +54,7 @@ public class Folder {
         this.folderLine = folderLine;
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 41 * hash + Objects.hashCode(this.name);
-        hash = 41 * hash + (this.haselement ? 1 : 0);
-        hash = 41 * hash + Objects.hashCode(this.folderLine);
-        return hash;
-    }
+    
 
     @Override
     public boolean equals(Object obj) {
@@ -75,17 +68,13 @@ public class Folder {
             return false;
         }
         final Folder other = (Folder) obj;
-        if (this.haselement != other.haselement) {
-            return false;
-        }
         if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        if (!Objects.equals(this.folderLine, other.folderLine)) {
             return false;
         }
         return true;
     }
+
+   
 
     @Override
     public String toString() {

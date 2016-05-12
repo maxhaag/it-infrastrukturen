@@ -62,10 +62,20 @@ public class XMLFileReader {
     //grün
     private ArrayList<Relation> inst_rel_changes = new ArrayList<>();
 
+    //rot, es werden nur die Folder benötigt welche in Ref sind und nicht in Inst da die Folder aus Inst nicht Grün gefärbt werden können.
+    private ArrayList<Folder> ref_fol_changes = new ArrayList<>();
+
+    //rot, dies sind Views welche entweder garnicht in inst sind, oder wo in Ref eine Beschreibung ist und in Inst nicht.
+    private ArrayList<ViewElement> ref_viewelement_changes = new ArrayList<>();
+
     //Benötigt für GUI Elemente
-    private static boolean startGui = true;
-    private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
-    private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
+    private static boolean startGui = false;
+    // private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
+    // private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
+
+    private String refFileStr = "Enterprise A.archimate";
+    private String instFileStr = "Enterprise B.archimate";
+
     private File refFile = new File(refFileStr);
     private File instFile = new File(instFileStr);
 
@@ -391,7 +401,8 @@ public class XMLFileReader {
         final String RELATIONSHIP = "relationship=\"(.*?)\"";
         final String CHILDSTART = "child xsi";
         final String TARGETREGEX = "target=\"(.*?)\"";
-
+        final String SOURCEENDEINLINE = "/>";
+        final String SOURCEEND = "/sourceConnection>";
         //Speichert die Childe ID in welcher man sich gerade befindet
         String childeID = "";
 
@@ -416,14 +427,14 @@ public class XMLFileReader {
                     }
                     continue;
                 }
-
+                boolean isInSource = false;
                 if (oneLine.contains(SOURCESTART)) {
 
                     Pattern pat = Pattern.compile(IDPEREGEX);
                     Matcher mat = pat.matcher(oneLine);
                     if (mat.find()) {
                         source.setId(mat.group(1));
-                        source.setConnectionLine(oneLine);
+                        source.getConnectionLine().add(oneLine);
                         source.setChildID(childeID);
                         Pattern patRel = Pattern.compile(RELATIONSHIP);
                         Matcher matRel = patRel.matcher(oneLine);
@@ -435,15 +446,34 @@ public class XMLFileReader {
                         if (matRel.find()) {
                             source.setTarget(matRel.group(1));
                         }
+
                     }
-                    if (listType == INST) {
-                        allInstSourceConnections.add(source);
-                        source = new SourceConnection();
+                    if (oneLine.contains(SOURCEENDEINLINE)) {
+                        if (listType == INST) {
+                            allInstSourceConnections.add(source);
+                            source = new SourceConnection();
 
-                    } else {
-                        allRefSourceConnections.add(source);
-                        source = new SourceConnection();
+                        } else {
+                            allRefSourceConnections.add(source);
+                            source = new SourceConnection();
 
+                        }
+                    }
+                }
+                if (isInSource) {
+                    source.getConnectionLine().add(oneLine);
+                    if (oneLine.contains(SOURCEEND)) {
+                        isInSource = false;
+
+                        if (listType == INST) {
+                            allInstSourceConnections.add(source);
+                            source = new SourceConnection();
+
+                        } else {
+                            allRefSourceConnections.add(source);
+                            source = new SourceConnection();
+
+                        }
                     }
                 }
 
@@ -492,15 +522,14 @@ public class XMLFileReader {
                     folder.setFolderLine("");
                 }
                 if (listType == INST) {
-                        instFolders.add(folder);
-                        folder = new Folder();
-                       
+                    instFolders.add(folder);
+                    folder = new Folder();
 
-                    } else {
-                        refFolders.add(folder);
-                        folder = new Folder();
+                } else {
+                    refFolders.add(folder);
+                    folder = new Folder();
 
-                    }
+                }
 
             }
 
@@ -659,7 +688,7 @@ public class XMLFileReader {
                         toAdd.setName(mat.group(1));
                     }
                     toAdd.setLine(oneLine);
-                    if (oneLine.contains(ELSELECTOR)&&oneLine.contains(ELEMENTENDINLINE)) {
+                    if (oneLine.contains(ELSELECTOR) && oneLine.contains(ELEMENTENDINLINE)) {
                         isInElement = false;
                         if (listType == INST) {
                             instFig.add(toAdd);
@@ -707,6 +736,8 @@ public class XMLFileReader {
         inst_fig_changes = (ArrayList<Figure>) createChangeList(instFig, refFig);
         ref_rel_changes = (ArrayList<Relation>) createChangeList(refRel, instRel);
         inst_rel_changes = (ArrayList<Relation>) createChangeList(instRel, refRel);
+        ref_fol_changes = (ArrayList<Folder>) createChangeList(refFolders, instFolders);
+        ref_viewelement_changes = (ArrayList<ViewElement>) createChangeList(refView, instView);
     }
 
     /**
@@ -822,19 +853,18 @@ public class XMLFileReader {
                         inFig = false;
                     }
                     if (oneSolLine.contains("<folder name") && oneSolLine.contains(oneRefFig.getFolder())) {
-                        boolean idExist = false;
-                        //Prüfen ob IDs aus Instanz und Referenz gleich (bereits da), ansonsten ID anpassen und hinzufügen
-                        for (Figure oneInstFig : instFig) {
-                            if (oneInstFig.getId().equals(oneRefFig.getId())) {
-                                idExist = true;
-                                solutionDoc.add(solLineCount + 1, getLineWithOtherID(oneRefFig.getLine()));
 
+                        if (oneRefFig.getDocumentation().size() > 0) {
+                            solutionDoc.add(solLineCount + 1, oneRefFig.getLine());
+                            for (int j = 0; j < oneRefFig.getDocumentation().size(); j++) {
+
+                                solutionDoc.add(solLineCount + 2 + j, oneRefFig.getLine());
                             }
-                        }
-                        //Id noch nicht vorhanden, also Änderung einfach so adden
-                        if (!idExist) {
+                            solutionDoc.add(solLineCount + 1 + oneRefFig.getDocumentation().size(), "</element>");
+                        } else {
                             solutionDoc.add(solLineCount + 1, oneRefFig.getLine());
                         }
+
                     }
 
                 }
@@ -1029,16 +1059,35 @@ public class XMLFileReader {
                             if (mat.find()) {
                                 if (s.getChildID().equals(mat.group(1))) {
                                     if (!listOfChildIDwichAddedToSolution.contains(s.getChildID())) {
-                                        String oneSourceLine = s.getConnectionLine();
-                                        if (oneSourceLine.contains("sourceConnection xsi")) {
+                                        if (s.getConnectionLine().size() > 1) {
+                                            for (int m = 0; m < s.getConnectionLine().size(); m++) {
+                                                if (s.getId().equals("8b96cb09")) {
+                                                    String kjdf = "asdfads";
+                                                }
+                                                String oneSourceLine = s.getConnectionLine().get(m);
+                                                if (oneSourceLine.contains("sourceConnection xsi")) {
 
-                                            if (oneSourceLine.contains("lineColor")) {
-                                                oneSourceLine = oneSourceLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
-                                            } else {
-                                                oneSourceLine = getLineInsertLineColor(oneSourceLine, COLOR_RED, LINE_COL);
+                                                    if (oneSourceLine.contains("lineColor")) {
+                                                        oneSourceLine = oneSourceLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
+                                                    } else {
+                                                        oneSourceLine = getLineInsertLineColor(oneSourceLine, COLOR_RED, LINE_COL);
+                                                    }
+                                                }
+                                                solutionDoc.add(k + 2 + m, oneSourceLine);
                                             }
+                                        } else {
+
+                                            String oneSourceLine = s.getConnectionLine().get(0);
+                                            if (oneSourceLine.contains("sourceConnection xsi")) {
+
+                                                if (oneSourceLine.contains("lineColor")) {
+                                                    oneSourceLine = oneSourceLine.replaceAll("lineColor=\"(.*?)\"", "lineColor=" + "\"#FF0000\"");
+                                                } else {
+                                                    oneSourceLine = getLineInsertLineColor(oneSourceLine, COLOR_RED, LINE_COL);
+                                                }
+                                            }
+                                            solutionDoc.add(k + 2, oneSourceLine);
                                         }
-                                        solutionDoc.add(k + 2, oneSourceLine);
                                     }
                                 }
                             }
@@ -1113,7 +1162,7 @@ public class XMLFileReader {
         Matcher mat = pat.matcher(line);
         if (mat.find()) {
             int i = Integer.parseInt(mat.group(1));
-            line = line.replaceAll("id=\"(.*?)\"", "id=" + i * 1000);
+            line = line.replaceAll("id=\"(.*?)\"", "id=\"" + i + "1000" + "\"");
         }
 
         return line;
@@ -1145,7 +1194,7 @@ public class XMLFileReader {
         Pattern pat = Pattern.compile("id=\"(.*?)\"");
         Matcher mat = pat.matcher(line);
         if (mat.find()) {
-            int i = Integer.parseInt(mat.group(1));
+            String i = mat.group(1);
             line = line.replaceAll("id=\"(.*?)\"", "id=\"" + i + "\" " + fill + "=" + colString);
         }
 
