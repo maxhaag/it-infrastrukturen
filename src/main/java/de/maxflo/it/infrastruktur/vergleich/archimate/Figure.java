@@ -5,6 +5,7 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -19,17 +20,31 @@ public class Figure {
     private String name;
     private String folder;
     private String line;
+    private ArrayList<String> documentation;
 
-    public Figure(String type, String id, String name, String folder) {
+    public Figure(String type, String id, String name, String folder,ArrayList<String> documentation) {
         this.type = type;
         this.id = id;
         this.name = name;
         this.folder = folder;
+        this.documentation = documentation;
     }
 
     public Figure() {
+        documentation = new ArrayList<>();
     }
 
+    public ArrayList<String> getDocumentation() {
+        return documentation;
+    }
+
+    public void setDocumentation(ArrayList<String> documentation) {
+        this.documentation = documentation;
+    }
+
+   
+
+    
     public String getType() {
         return type;
     }

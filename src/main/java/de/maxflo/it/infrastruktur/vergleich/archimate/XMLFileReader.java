@@ -24,6 +24,8 @@ import java.util.regex.Pattern;
  */
 public class XMLFileReader {
 
+    private static final Logger logger = Logger.getGlobal();
+
     private final static int REF = 0;
     private final static int INST = 1;
 
@@ -44,6 +46,11 @@ public class XMLFileReader {
     private ArrayList<Child> allInstChilds = new ArrayList<>();
     private ArrayList<SourceConnection> allRefSourceConnections = new ArrayList<>();
     private ArrayList<SourceConnection> allInstSourceConnections = new ArrayList<>();
+    private ArrayList<ViewElement> refView = new ArrayList<>();
+    private ArrayList<ViewElement> instView = new ArrayList<>();
+
+    private ArrayList<Folder> refFolders = new ArrayList<>();
+    private ArrayList<Folder> instFolders = new ArrayList<>();
 
     //rot
     private ArrayList<Figure> ref_fig_changes = new ArrayList<>();
@@ -56,7 +63,7 @@ public class XMLFileReader {
     private ArrayList<Relation> inst_rel_changes = new ArrayList<>();
 
     //Benötigt für GUI Elemente
-    private static boolean startGui = false;
+    private static boolean startGui = true;
     private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
     private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
     private File refFile = new File(refFileStr);
@@ -72,7 +79,10 @@ public class XMLFileReader {
         }
 
         //Später von GUI aus aufrufen...
+        logger.info("Start Reading Files");
         fReader.readFiles();
+        logger.info("Ref und Inst File wurde gelesen");
+
         fReader.parseFigures();
         fReader.checkChanges();
         fReader.printSolutionToFile(fReader.buildSolution());
@@ -121,22 +131,43 @@ public class XMLFileReader {
      */
     private void parseFigures() {
 
+        logger.info("Start beim Parsen der einzelnen Listen");
         //Erzeugt eine Liste in welcher die Figures aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
         patternSearchFigures(refDoc, REF);
+        logger.info("ref Figures wurden geparst");
         //Erzeugt eine Liste in welcher die Figures aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
         patternSearchFigures(instDoc, INST);
+        logger.info("inst Figures wurden geparst");
         //Erzeugt eine Liste in welcher die Relations aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
         patternSearchRelations(refDoc, REF);
+        logger.info("ref Relations wurden geparst");
         //Erzeugt eine Liste in welcher die Relations aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
         patternSearchRelations(instDoc, INST);
+        logger.info("inst Relations wurden geparst");
         //Erzeugt eine Liste aller Childs aus der refDoc Liste. Um Später die Childs heraus zu filtern welche nicht in der instDoc Liste vorhanden sind. In der Solution dann Rot eingefärbt.
         patternSearchChilds(refDoc, REF);
+        logger.info("ref Childs wurden geparst");
         //Erzeugt eine Liste aller Childs aus der instDoc Liste.
         patternSearchChilds(instDoc, INST);
+        logger.info("ind Childs wurden geparst");
         //Erzeugt eine Liste aller SourceConnection aus der refDoc Liste um die SourceConnection in die SolutionListe zu schreiben welche nicht in der instDoc Liste vorhanden sind.
         patternSearchSourceConnection(refDoc, REF);
+        logger.info("ref SourceConnections wurden geparst");
         //Noch nicht benutzt bisher.
         patternSearchSourceConnection(instDoc, INST);
+        logger.info("instSourceCoonections  wurden geparst");
+
+        patternSearchViews(instDoc, INST);
+        logger.info("ref Views wurden geparst");
+
+        patternSearchViews(refDoc, REF);
+        logger.info("inst Vies wurden geparst");
+
+        patternSearchFolder(instDoc, INST);
+        logger.info("ref Folders wurden geparst");
+
+        patternSearchFolder(refDoc, REF);
+        logger.info("inst Folders wurden geparst");
 
     }
 
@@ -256,6 +287,95 @@ public class XMLFileReader {
     }
 
     /**
+     * There can be Documantations in the Views so all Views from the XML are
+     * writen in the Lists to check the Dokumentaion from inst with ref
+     *
+     * @param docList
+     * @param listType
+     */
+    private void patternSearchViews(ArrayList<String> docList, int listType) {
+
+        //String regex für verschiedene vergleiche von String Lines
+        final String START_VIEW = "<folder name=\"Views\"";
+        final String ISVIEW = "element xsi";
+        final String IDPEREGEX = "id=\"(.*?)\"";
+        final String VIEW_NAME_REGEX = "name=\"(.*?)\"";
+        final String DOCUMENTATION = "documentation>";
+        final String DOCUMENTATIONEND = "/documentation>";
+        final String VIEWEND = "/element";
+
+        //beginnt erst zu lesen wenn die View in der xml begonnen hat
+        boolean inViews = false;
+
+        boolean newView = false;
+
+        boolean documantationStart = false;
+
+        ViewElement ve = new ViewElement();
+
+        //Gesamtes Doc.
+        for (int i = 0; i < docList.size(); i++) {
+            String oneLine = docList.get(i);
+
+            //Prüft ob die View startet
+            if (oneLine.contains(START_VIEW)) {
+                inViews = true;
+            }
+
+            //Sobald in der View
+            if (inViews) {
+                //Prüft ob eine neue View startet und schreibt den wert in currentViewname
+                if (oneLine.contains(ISVIEW)) {
+                    newView = true;
+                    Pattern pat = Pattern.compile(IDPEREGEX);
+                    Matcher mat = pat.matcher(oneLine);
+                    if (mat.find()) {
+                        String id = mat.group(1);
+                        ve.setId(id);
+                        pat = Pattern.compile(VIEW_NAME_REGEX);
+                        mat = pat.matcher(oneLine);
+                        if (mat.find()) {
+                            String name = mat.group(1);
+                            ve.setName(name);
+                        }
+                    }
+
+                }
+
+                if (newView) {
+
+                    if (oneLine.contains(DOCUMENTATION)) {
+                        documantationStart = true;
+                        ve.getDocumentation().add(oneLine);
+                        if (oneLine.contains(DOCUMENTATIONEND)) {
+                            documantationStart = false;
+                        }
+                    }
+                    if (documantationStart) {
+                        ve.getDocumentation().add(oneLine);
+
+                        if (oneLine.contains(DOCUMENTATIONEND)) {
+                            documantationStart = false;
+                        }
+                    }
+                    if (oneLine.contains(VIEWEND)) {
+                        newView = false;
+                        if (listType == INST) {
+                            instView.add(ve);
+                            ve = new ViewElement();
+                        } else {
+                            refView.add(ve);
+                            ve = new ViewElement();
+                        }
+                    }
+                }
+
+            }
+
+        }
+    }
+
+    /**
      * Reads all SourceConnection from XML Archimate List
      *
      * @param docList StingArray from Archimate XML List
@@ -326,6 +446,61 @@ public class XMLFileReader {
 
                     }
                 }
+
+            }
+
+        }
+    }
+
+    /**
+     * Reads all SourceConnection from XML Archimate List
+     *
+     * @param docList StingArray from Archimate XML List
+     * @param listType Typ REF or INST, REF writes the allRefSourceConnections
+     * and INST the allInstSourceConnections List.
+     */
+    private void patternSearchFolder(ArrayList<String> docList, int listType) {
+
+        //String regex für verschiedene vergleiche von String Lines
+        final String START_FOLDER = "folder name";
+        final String IDPEREGEX = "id=\"(.*?)\"";
+        final String FOLDER_NAME_REGEX = "name=\"(.*?)\"";
+        final String ENDFOLDER = "/>";
+
+        Folder folder = new Folder();
+
+        for (int i = 0; i < docList.size(); i++) {
+            String oneLine = docList.get(i);
+            if (oneLine.contains(START_FOLDER)) {
+
+                Pattern pat = Pattern.compile(IDPEREGEX);
+                Matcher mat = pat.matcher(oneLine);
+                if (mat.find()) {
+                    folder.setId(mat.group(1));
+                }
+                pat = Pattern.compile(FOLDER_NAME_REGEX);
+                mat = pat.matcher(oneLine);
+                if (mat.find()) {
+                    folder.setName(mat.group(1));
+                }
+                if (oneLine.contains(START_FOLDER) && oneLine.contains(ENDFOLDER)) {
+                    folder.setHaselement(false);
+                    folder.setFolderLine(oneLine);
+
+                } else {
+                    folder.setHaselement(true);
+                    folder.setFolderLine("");
+                }
+                if (listType == INST) {
+                        instFolders.add(folder);
+                        folder = new Folder();
+                       
+
+                    } else {
+                        refFolders.add(folder);
+                        folder = new Folder();
+
+                    }
 
             }
 
@@ -437,9 +612,22 @@ public class XMLFileReader {
         final String TYPEREGEX = "type=\"(.*?)\"";
         final String IDEREGEX = "id=\"(.*?)\"";
         final String NAMEPEREGEX = "name=\"(.*?)\"";
+        final String ELEMENTEND = "/element";
+        final String ELEMENTENDINLINE = "/>";
+
+        final String DOCUMENTATION = "documentation>";
+        final String DOCUMENTATIONEND = "/documentation>";
+
         final String[] REGEXES = {TYPEREGEX, IDEREGEX, NAMEPEREGEX};
+
         String folderName = "";
+
+        boolean isInElement = false;
+
         boolean inFigures = true;
+
+        boolean documantationStart = false;
+
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
             if (inFigures) {
@@ -450,8 +638,10 @@ public class XMLFileReader {
                         folderName = mat.group(1);
                     }
                 }
+                Figure toAdd = new Figure();
                 if (oneLine.contains(ELSELECTOR)) {
-                    Figure toAdd = new Figure();
+                    isInElement = true;
+
                     toAdd.setFolder(folderName);
                     Pattern pat = Pattern.compile(REGEXES[0]);
                     Matcher mat = pat.matcher(oneLine);
@@ -469,10 +659,36 @@ public class XMLFileReader {
                         toAdd.setName(mat.group(1));
                     }
                     toAdd.setLine(oneLine);
-                    if (listType == INST) {
-                        instFig.add(toAdd);
-                    } else {
-                        refFig.add(toAdd);
+                    if (oneLine.contains(ELSELECTOR)&&oneLine.contains(ELEMENTENDINLINE)) {
+                        isInElement = false;
+                        if (listType == INST) {
+                            instFig.add(toAdd);
+                        } else {
+                            refFig.add(toAdd);
+                        }
+                    }
+                    if (oneLine.contains(ELEMENTEND)) {
+                        isInElement = false;
+                        if (listType == INST) {
+                            instFig.add(toAdd);
+                        } else {
+                            refFig.add(toAdd);
+                        }
+                    }
+                }
+                if (isInElement) {
+                    if (oneLine.contains(DOCUMENTATION)) {
+                        documantationStart = true;
+                        toAdd.getDocumentation().add(oneLine);
+                        if (oneLine.contains(DOCUMENTATIONEND)) {
+                            documantationStart = false;
+                        }
+                    }
+                    if (documantationStart) {
+                        toAdd.getDocumentation().add(oneLine);
+                        if (oneLine.contains(DOCUMENTATIONEND)) {
+                            documantationStart = false;
+                        }
                     }
                 }
             }
@@ -834,6 +1050,8 @@ public class XMLFileReader {
             }
 
         }
+
+        //Alle eingefügten SourceConnecten müssen jetzt noch in den Einzelnen Childs in die targetConnections geschrieben werden.
         for (int i = 0; i < ref_rel_changes.size(); i++) {
             Relation r = ref_rel_changes.get(i);
             for (int j = 0; j < allRefSourceConnections.size(); j++) {
@@ -843,9 +1061,8 @@ public class XMLFileReader {
                         String oneSolutionLine = solutionDoc.get(k);
                         if (oneSolutionLine.contains("child xsi")) {
 
-                            
                             String TARGETREGEX = "targetConnections=\"(.*?)\"";
-                           
+
                             String IDREGEX = "id=\"(.*?)\"";
                             Pattern pat = Pattern.compile(IDREGEX);
                             Matcher mat = pat.matcher(oneSolutionLine);
