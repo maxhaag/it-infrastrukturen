@@ -35,22 +35,22 @@ public class XMLFileReader {
     private final static int LINE_COL = 4;
     private final static int FILL_COL = 5;
 
-    private ArrayList<String> refDoc = new ArrayList<>();
-    private ArrayList<String> instDoc = new ArrayList<>();
+    private final ArrayList<String> refDoc = new ArrayList<>();
+    private final ArrayList<String> instDoc = new ArrayList<>();
 
-    private ArrayList<Figure> refFig = new ArrayList<>();
-    private ArrayList<Figure> instFig = new ArrayList<>();
-    private ArrayList<Relation> refRel = new ArrayList<>();
-    private ArrayList<Relation> instRel = new ArrayList<>();
-    private ArrayList<Child> allRefChilds = new ArrayList<>();
-    private ArrayList<Child> allInstChilds = new ArrayList<>();
-    private ArrayList<SourceConnection> allRefSourceConnections = new ArrayList<>();
-    private ArrayList<SourceConnection> allInstSourceConnections = new ArrayList<>();
-    private ArrayList<ViewElement> refView = new ArrayList<>();
-    private ArrayList<ViewElement> instView = new ArrayList<>();
+    private final ArrayList<Figure> refFig = new ArrayList<>();
+    private final ArrayList<Figure> instFig = new ArrayList<>();
+    private final ArrayList<Relation> refRel = new ArrayList<>();
+    private final ArrayList<Relation> instRel = new ArrayList<>();
+    private final ArrayList<Child> allRefChilds = new ArrayList<>();
+    private final ArrayList<Child> allInstChilds = new ArrayList<>();
+    private final ArrayList<SourceConnection> allRefSourceConnections = new ArrayList<>();
+    private final ArrayList<SourceConnection> allInstSourceConnections = new ArrayList<>();
+    private final ArrayList<ViewElement> refView = new ArrayList<>();
+    private final ArrayList<ViewElement> instView = new ArrayList<>();
 
-    private ArrayList<Folder> refFolders = new ArrayList<>();
-    private ArrayList<Folder> instFolders = new ArrayList<>();
+    private final ArrayList<Folder> refFolders = new ArrayList<>();
+    private final ArrayList<Folder> instFolders = new ArrayList<>();
 
     //rot
     private ArrayList<Figure> ref_fig_changes = new ArrayList<>();
@@ -69,12 +69,12 @@ public class XMLFileReader {
     private ArrayList<ViewElement> ref_viewelement_changes = new ArrayList<>();
 
     //Benötigt für GUI Elemente
-    private static boolean startGui = false;
-    // private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
-    // private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
+    private static final boolean startGui = false;
+     private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
+     private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
 
-    private String refFileStr = "Enterprise A.archimate";
-    private String instFileStr = "Enterprise B.archimate";
+   // private final String refFileStr = "Enterprise A.archimate";
+   // private final String instFileStr = "Enterprise B.archimate";
 
     private File refFile = new File(refFileStr);
     private File instFile = new File(instFileStr);
@@ -111,7 +111,7 @@ public class XMLFileReader {
         try {
             bRef = new BufferedReader(new FileReader(refFile));
             bIns = new BufferedReader(new FileReader(instFile));
-            String oneLine = "";
+            String oneLine;
             while ((oneLine = bRef.readLine()) != null) {
                 refDoc.add(oneLine);
             }
@@ -128,7 +128,7 @@ public class XMLFileReader {
             try {
                 bRef.close();
                 bIns.close();
-            } catch (IOException ex) {
+            } catch (IOException | NullPointerException ex) {
                 Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
@@ -239,7 +239,7 @@ public class XMLFileReader {
                         String viewElement = mat.group(1);
                         currentViewName = viewElement;
                     }
-                    continue;
+
                 }
 
                 //Prüft ob ein Child startet
@@ -410,7 +410,7 @@ public class XMLFileReader {
         boolean inView = false;
 
         SourceConnection source = new SourceConnection();
-
+        boolean isInSource = false;
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
             if (oneLine.contains(START_FIG)) {
@@ -425,16 +425,16 @@ public class XMLFileReader {
                     if (mat.find()) {
                         childeID = mat.group(1);
                     }
-                    continue;
-                }
-                boolean isInSource = false;
-                if (oneLine.contains(SOURCESTART)) {
 
+                }
+
+                if (oneLine.contains(SOURCESTART)) {
+                    isInSource = true;
                     Pattern pat = Pattern.compile(IDPEREGEX);
                     Matcher mat = pat.matcher(oneLine);
                     if (mat.find()) {
                         source.setId(mat.group(1));
-                        source.getConnectionLine().add(oneLine);
+
                         source.setChildID(childeID);
                         Pattern patRel = Pattern.compile(RELATIONSHIP);
                         Matcher matRel = patRel.matcher(oneLine);
@@ -449,6 +449,8 @@ public class XMLFileReader {
 
                     }
                     if (oneLine.contains(SOURCEENDEINLINE)) {
+                        isInSource = false;
+                        source.getConnectionLine().add(oneLine);
                         if (listType == INST) {
                             allInstSourceConnections.add(source);
                             source = new SourceConnection();
@@ -496,6 +498,9 @@ public class XMLFileReader {
         final String IDPEREGEX = "id=\"(.*?)\"";
         final String FOLDER_NAME_REGEX = "name=\"(.*?)\"";
         final String ENDFOLDER = "/>";
+        final String ENDFOLDERTAG = "/folder";
+
+        ArrayList<String> previousFolder = new ArrayList<>();
 
         Folder folder = new Folder();
 
@@ -512,15 +517,19 @@ public class XMLFileReader {
                 mat = pat.matcher(oneLine);
                 if (mat.find()) {
                     folder.setName(mat.group(1));
+                    previousFolder.add(mat.group(1));
+                    folder.getPreviousFolder().addAll(previousFolder);
                 }
                 if (oneLine.contains(START_FOLDER) && oneLine.contains(ENDFOLDER)) {
+
+                    previousFolder.remove(previousFolder.size() - 1);
                     folder.setHaselement(false);
-                    folder.setFolderLine(oneLine);
+                    folder.getFolderLine().add(oneLine);
 
                 } else {
                     folder.setHaselement(true);
-                    folder.setFolderLine("");
                 }
+
                 if (listType == INST) {
                     instFolders.add(folder);
                     folder = new Folder();
@@ -531,6 +540,10 @@ public class XMLFileReader {
 
                 }
 
+            }
+            if (oneLine.contains(ENDFOLDERTAG)) {
+
+                previousFolder.remove(previousFolder.size() - 1);
             }
 
         }
@@ -590,7 +603,7 @@ public class XMLFileReader {
                     pat = Pattern.compile(REGEXES[3]);
                     mat = pat.matcher(oneLine);
                     if (mat.find()) {
-                        String source = "";
+                        String source;
                         if (listType == INST) {
                             source = findNameOfFigureByIDFromInstList(mat.group(1));
                         } else {
@@ -601,7 +614,7 @@ public class XMLFileReader {
                     pat = Pattern.compile(REGEXES[4]);
                     mat = pat.matcher(oneLine);
                     if (mat.find()) {
-                        String target = "";
+                        String target;
                         if (listType == INST) {
                             target = findNameOfFigureByIDFromInstList(mat.group(1));
                         } else {
@@ -618,7 +631,6 @@ public class XMLFileReader {
                 }
                 if (oneLine.contains(END_REL)) {
                     inRelations = false;
-                    break;
                 }
             }
         }
@@ -634,8 +646,7 @@ public class XMLFileReader {
         //Stopp bei:
         //<folder name="Relations" id="408ff6d3" type="relations">
         //regexr.com
-        final String END_FIG = "<folder name=\"Relations\"";
-
+        final String BEGIN_REL = "<folder name=\"Relations\"";
         final String FOLDERNAME = "folder name";
         final String ELSELECTOR = "element xsi";
         final String TYPEREGEX = "type=\"(.*?)\"";
@@ -656,7 +667,7 @@ public class XMLFileReader {
         boolean inFigures = true;
 
         boolean documantationStart = false;
-
+        Figure toAdd = new Figure();
         for (int i = 0; i < docList.size(); i++) {
             String oneLine = docList.get(i);
             if (inFigures) {
@@ -667,7 +678,7 @@ public class XMLFileReader {
                         folderName = mat.group(1);
                     }
                 }
-                Figure toAdd = new Figure();
+
                 if (oneLine.contains(ELSELECTOR)) {
                     isInElement = true;
 
@@ -695,21 +706,17 @@ public class XMLFileReader {
                         } else {
                             refFig.add(toAdd);
                         }
+                        toAdd = new Figure();
                     }
-                    if (oneLine.contains(ELEMENTEND)) {
-                        isInElement = false;
-                        if (listType == INST) {
-                            instFig.add(toAdd);
-                        } else {
-                            refFig.add(toAdd);
-                        }
-                    }
+
                 }
+
                 if (isInElement) {
                     if (oneLine.contains(DOCUMENTATION)) {
                         documantationStart = true;
-                        toAdd.getDocumentation().add(oneLine);
+
                         if (oneLine.contains(DOCUMENTATIONEND)) {
+                            toAdd.getDocumentation().add(oneLine);
                             documantationStart = false;
                         }
                     }
@@ -720,9 +727,19 @@ public class XMLFileReader {
                         }
                     }
                 }
+                if (oneLine.contains(ELEMENTEND)) {
+                    isInElement = false;
+                    if (listType == INST) {
+                        instFig.add(toAdd);
+                    } else {
+                        refFig.add(toAdd);
+                    }
+                    toAdd = new Figure();
+                }
             }
-            if (oneLine.contains(END_FIG)) {
+            if (oneLine.contains(BEGIN_REL)) {
                 inFigures = false;
+
             }
         }
     }
@@ -835,6 +852,67 @@ public class XMLFileReader {
         //Zu beginn wird zunächst das solutionDoc auf das InstDoc gesetzt und mit Informationen angereichert
         ArrayList<String> solutionDoc = instDoc;
 
+        //Als ersten Schritte Alle Folder Tags richtig Setzen, dazu gehört das einerseits die Folder welche in Ref aber nicht in Inst vorhanden sind 
+        //einzufügen aber auch zu sehen ob ein Folder in Ref Elemente Besitzt aber in Inst nicht, dann muss dieser Folder nicht direkt geschlossen werden, sondern ein Folder Ende Tag eingefügt werden.
+        final String FOLDER_NAME_REGEX = "name=\"(.*?)\"";
+        final String ENDFOLDER = "/>";
+        for (int i = 0; i < ref_fol_changes.size(); i++) {
+            Folder folder = ref_fol_changes.get(i);
+            boolean folderFound = false;
+            for (int j = 0; j < solutionDoc.size(); j++) {
+                String oneSolLine = solutionDoc.get(j);
+                if (oneSolLine.contains("<folder name")) {
+
+                    Pattern pat = Pattern.compile(FOLDER_NAME_REGEX);
+                    Matcher mat = pat.matcher(oneSolLine);
+                    if (mat.find()) {
+                        if (mat.group(1).equals(folder.getName())) {
+                            folderFound = true;
+                        }
+                    }
+                }
+            }
+            if (folderFound) {
+                for (int j = 0; j < solutionDoc.size(); j++) {
+                    String oneSolLine = solutionDoc.get(j);
+                    if (oneSolLine.contains("<folder name")) {
+
+                        Pattern pat = Pattern.compile(FOLDER_NAME_REGEX);
+                        Matcher mat = pat.matcher(oneSolLine);
+                        if (mat.find()) {
+                            if (mat.group(1).equals(folder.getName())) {
+                                if (oneSolLine.contains(ENDFOLDER)) {
+                                    oneSolLine = oneSolLine.replaceAll("/>", ">");
+                                    solutionDoc.add(j, oneSolLine);
+                                    solutionDoc.add(j + 1, "</folder>");
+                                    solutionDoc.remove(j + 2);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (int j = 0; j < solutionDoc.size(); j++) {
+                    String oneSolLine = solutionDoc.get(j);
+                    if (oneSolLine.contains("<folder name")) {
+
+                        Pattern pat = Pattern.compile(FOLDER_NAME_REGEX);
+                        Matcher mat = pat.matcher(oneSolLine);
+                        if (mat.find()) {
+                            if (mat.group(1).equals(folder.getPreviousFolder().get(folder.getPreviousFolder().size() - 2))) {
+                                if (!folder.isHaselement()) {
+                                    solutionDoc.add(j + 1, folder.getFolderLine().get(0));
+                                } else {
+                                    solutionDoc.add(j + 1, "<folder name=\"" + folder.getName() + "\" id=\"" + folder.getId() + "\">");
+                                    solutionDoc.add(j + 2, "</folder>");
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         String relStart = "<folder name=\"Relations\"";
         String relEnd = "<folder name=\"Views\"";
 
@@ -858,9 +936,9 @@ public class XMLFileReader {
                             solutionDoc.add(solLineCount + 1, oneRefFig.getLine());
                             for (int j = 0; j < oneRefFig.getDocumentation().size(); j++) {
 
-                                solutionDoc.add(solLineCount + 2 + j, oneRefFig.getLine());
+                                solutionDoc.add(solLineCount + 2 + j, oneRefFig.getDocumentation().get(j));
                             }
-                            solutionDoc.add(solLineCount + 1 + oneRefFig.getDocumentation().size(), "</element>");
+                            solutionDoc.add(solLineCount + 2 + oneRefFig.getDocumentation().size(), "</element>");
                         } else {
                             solutionDoc.add(solLineCount + 1, oneRefFig.getLine());
                         }

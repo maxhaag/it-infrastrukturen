@@ -16,6 +16,7 @@ public class Child {
     
     private String childeID;
     private String archimateElementID;
+    private ArrayList<String> previousChilds;
     private ArrayList<String> relationshipIDs;
     private ArrayList<String> childlines;
     private String viewObjekt;
@@ -23,17 +24,8 @@ public class Child {
     public Child() {
         relationshipIDs = new ArrayList<>();
         childlines = new ArrayList<>();
+        previousChilds = new ArrayList<>();
     }
-
-    public Child(String childeID, String archimateElementID, ArrayList<String> relationshipIDs, ArrayList<String> childlines, String viewObjekt) {
-        this.childeID = childeID;
-        this.archimateElementID = archimateElementID;
-        this.relationshipIDs = relationshipIDs;
-        this.childlines = childlines;
-        this.viewObjekt = viewObjekt;
-    }
-    
-    
 
     public String getChildeID() {
         return childeID;
@@ -75,6 +67,15 @@ public class Child {
         this.viewObjekt = viewObjekt;
     }
 
+    public ArrayList<String> getPreviousChilds() {
+        return previousChilds;
+    }
+
+    public void setPreviousChilds(ArrayList<String> previousChilds) {
+        this.previousChilds = previousChilds;
+    }
+
+    
     @Override
     public int hashCode() {
         int hash = 3;

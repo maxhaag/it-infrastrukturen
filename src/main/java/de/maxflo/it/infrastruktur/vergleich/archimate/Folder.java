@@ -5,6 +5,7 @@
  */
 package de.maxflo.it.infrastruktur.vergleich.archimate;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 /**
@@ -17,9 +18,12 @@ public class Folder {
     private String name;
     private String id;
     private boolean haselement;
-    private String folderLine;
+    private ArrayList<String> folderLine;
+    private ArrayList<String> previousFolder;
 
     public Folder() {
+        previousFolder = new ArrayList<>();
+        folderLine = new ArrayList<>();
     }
 
     public String getName() {
@@ -46,15 +50,28 @@ public class Folder {
         this.haselement = haselement;
     }
 
-    public String getFolderLine() {
+    public ArrayList<String> getFolderLine() {
         return folderLine;
     }
 
-    public void setFolderLine(String folderLine) {
+    public void setFolderLine(ArrayList<String> folderLine) {
         this.folderLine = folderLine;
     }
 
-    
+
+    public ArrayList<String> getPreviousFolder() {
+        return previousFolder;
+    }
+
+    public void setPreviousFolder(ArrayList<String> previousFolder) {
+        this.previousFolder = previousFolder;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        return hash;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -68,11 +85,18 @@ public class Folder {
             return false;
         }
         final Folder other = (Folder) obj;
+        if (this.haselement != other.haselement) {
+            return false;
+        }
         if (!Objects.equals(this.name, other.name)) {
             return false;
         }
         return true;
     }
+
+    
+
+    
 
    
 

@@ -22,14 +22,7 @@ public class Figure {
     private String line;
     private ArrayList<String> documentation;
 
-    public Figure(String type, String id, String name, String folder,ArrayList<String> documentation) {
-        this.type = type;
-        this.id = id;
-        this.name = name;
-        this.folder = folder;
-        this.documentation = documentation;
-    }
-
+  
     public Figure() {
         documentation = new ArrayList<>();
     }
@@ -110,11 +103,19 @@ public class Figure {
         if (!Objects.equals(this.type, other.type)) {
             return false;
         }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
         if (!Objects.equals(this.name, other.name)) {
             return false;
         }
-        return Objects.equals(this.folder, other.folder);
+        if (!Objects.equals(this.folder, other.folder)) {
+            return false;
+        }
+        return true;
     }
+
+  
 
     @Override
     public String toString() {

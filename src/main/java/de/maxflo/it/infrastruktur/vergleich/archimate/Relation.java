@@ -25,14 +25,7 @@ public class Relation {
     public Relation() {
     }
 
-    public Relation(String type, String id, String name, String source, String target, String folder) {
-        this.type = type;
-        this.id = id;
-        this.name = name;
-        this.source = source;
-        this.target = target;
-        this.folder = folder;
-    }
+  
     
 
     public String getType() {
@@ -91,15 +84,9 @@ public class Relation {
         this.line = line;
     }
 
-    
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 23 * hash + Objects.hashCode(this.type);
-        hash = 23 * hash + Objects.hashCode(this.name);
-        hash = 23 * hash + Objects.hashCode(this.source);
-        hash = 23 * hash + Objects.hashCode(this.target);
-        hash = 23 * hash + Objects.hashCode(this.folder);
+        int hash = 5;
         return hash;
     }
 
@@ -118,6 +105,9 @@ public class Relation {
         if (!Objects.equals(this.type, other.type)) {
             return false;
         }
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
         if (!Objects.equals(this.name, other.name)) {
             return false;
         }
@@ -133,6 +123,10 @@ public class Relation {
         return true;
     }
 
+    
+    
+
+   
     @Override
     public String toString() {
         return "Relation{" + "type=" + type + ", id=" + id + ", name=" + name + ", source=" + source + ", target=" + target + ", folder=" + folder + '}';
