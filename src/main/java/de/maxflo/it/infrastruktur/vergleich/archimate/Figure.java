@@ -80,11 +80,7 @@ public class Figure {
 
     @Override
     public int hashCode() {
-        int hash = 3;
-        hash = 89 * hash + Objects.hashCode(this.type);
-        hash = 89 * hash + Objects.hashCode(this.name);
-        hash = 89 * hash + Objects.hashCode(this.folder);
-        hash = 89 * hash + Objects.hashCode(this.line);
+        int hash = 5;
         return hash;
     }
 
@@ -115,12 +111,16 @@ public class Figure {
         return true;
     }
 
-  
+   
 
     @Override
     public String toString() {
-        return "Figure{" + "type=" + type + ", id=" + id + ", name=" + name + ", folder=" + folder + ", line=" + line + '}';
+        return "Figure{" + "type=" + type + ", id=" + id + ", name=" + name + ", folder=" + folder + ", line=" + line + ", documentation=" + documentation + '}';
     }
+
+   
+  
+
 
     
    

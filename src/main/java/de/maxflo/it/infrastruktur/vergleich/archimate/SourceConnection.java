@@ -14,7 +14,6 @@ import java.util.Objects;
  */
 public class SourceConnection {
     
-    
     private String id;
     private ArrayList<String> connectionLine;
     private String target;
@@ -24,8 +23,6 @@ public class SourceConnection {
     public SourceConnection() {
         connectionLine = new ArrayList<>();
     }
-
-  
 
     public String getId() {
         return id;
@@ -44,7 +41,6 @@ public class SourceConnection {
     }
 
    
-
     public String getChildID() {
         return childID;
     }
@@ -73,8 +69,4 @@ public class SourceConnection {
     public String toString() {
         return "SourceConnection{" + "id=" + id + ", connectionLine=" + connectionLine + ", target=" + target + ", childID=" + childID + ", relationship=" + relationship + '}';
     }
-
-    
-    
-    
 }

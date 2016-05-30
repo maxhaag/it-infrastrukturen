@@ -13,6 +13,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -37,6 +40,7 @@ public class XMLFileReader {
 
     private final ArrayList<String> refDoc = new ArrayList<>();
     private final ArrayList<String> instDoc = new ArrayList<>();
+    private ArrayList<String> solutionDoc = new ArrayList<>();
 
     private final ArrayList<Figure> refFig = new ArrayList<>();
     private final ArrayList<Figure> instFig = new ArrayList<>();
@@ -51,6 +55,11 @@ public class XMLFileReader {
 
     private final ArrayList<Folder> refFolders = new ArrayList<>();
     private final ArrayList<Folder> instFolders = new ArrayList<>();
+
+    private final HashMap<String, String> refFigWithSameNameDifferendID = new HashMap<>();
+    private final HashMap<String, String> refRelWithSameNameDifferendID = new HashMap<>();
+    private final ArrayList<String> refFigWithSameNameIDs = new ArrayList<>();
+    private final ArrayList<String> refRelWithSameNameIDs = new ArrayList<>();
 
     //rot
     private ArrayList<Figure> ref_fig_changes = new ArrayList<>();
@@ -70,12 +79,11 @@ public class XMLFileReader {
 
     //Benötigt für GUI Elemente
     private static final boolean startGui = false;
-     private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
-     private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
+    //private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
+    //private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
 
-   // private final String refFileStr = "Enterprise A.archimate";
-   // private final String instFileStr = "Enterprise B.archimate";
-
+    private final String refFileStr = "Enterprise A.archimate";
+    private final String instFileStr = "Enterprise B.archimate";
     private File refFile = new File(refFileStr);
     private File instFile = new File(instFileStr);
 
@@ -93,10 +101,15 @@ public class XMLFileReader {
         fReader.readFiles();
         logger.info("Ref und Inst File wurde gelesen");
 
+        fReader.changeIDs();
         fReader.parseFigures();
-        fReader.checkChanges();
-        fReader.printSolutionToFile(fReader.buildSolution());
 
+        fReader.checkChanges();
+        fReader.buildSolution();
+
+        fReader.changeFigIDsInDoc();
+        fReader.changeRelIDsInDoc();
+        fReader.printSolutionToFile();
     }
 
     /**
@@ -141,19 +154,6 @@ public class XMLFileReader {
      */
     private void parseFigures() {
 
-        logger.info("Start beim Parsen der einzelnen Listen");
-        //Erzeugt eine Liste in welcher die Figures aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
-        patternSearchFigures(refDoc, REF);
-        logger.info("ref Figures wurden geparst");
-        //Erzeugt eine Liste in welcher die Figures aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
-        patternSearchFigures(instDoc, INST);
-        logger.info("inst Figures wurden geparst");
-        //Erzeugt eine Liste in welcher die Relations aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
-        patternSearchRelations(refDoc, REF);
-        logger.info("ref Relations wurden geparst");
-        //Erzeugt eine Liste in welcher die Relations aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
-        patternSearchRelations(instDoc, INST);
-        logger.info("inst Relations wurden geparst");
         //Erzeugt eine Liste aller Childs aus der refDoc Liste. Um Später die Childs heraus zu filtern welche nicht in der instDoc Liste vorhanden sind. In der Solution dann Rot eingefärbt.
         patternSearchChilds(refDoc, REF);
         logger.info("ref Childs wurden geparst");
@@ -179,6 +179,59 @@ public class XMLFileReader {
         patternSearchFolder(refDoc, REF);
         logger.info("inst Folders wurden geparst");
 
+    }
+
+    private void changeIDs() {
+        logger.info("Start beim Parsen der einzelnen Listen");
+        //Erzeugt eine Liste in welcher die Figures aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
+        patternSearchFigures(refDoc, REF);
+        logger.info("ref Figures wurden geparst");
+        //Erzeugt eine Liste in welcher die Figures aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
+        patternSearchFigures(instDoc, INST);
+        logger.info("inst Figures wurden geparst");
+
+        findDifferendIDsforFiguresSameName();
+
+        //Erzeugt eine Liste in welcher die Relations aus der refDoc liste sind welche nicht in der instDoc liste zu finden sind. In der Solution dann Rot eingefärbt.
+        patternSearchRelations(refDoc, REF);
+        logger.info("ref Relations wurden geparst");
+        //Erzeugt eine Liste in welcher die Relations aus der instDoc liste sind welche nicht in der refDoc liste zu finden sind. In der Solution dann Grün eingefärbt.
+        patternSearchRelations(instDoc, INST);
+        logger.info("inst Relations wurden geparst");
+
+        findDifferendIDsforRelastionsSameName();
+
+    }
+
+    private void changeFigIDsInDoc() {
+
+        for (int i = 0; i < solutionDoc.size(); i++) {
+            String line = solutionDoc.get(i);
+            for (String s : refFigWithSameNameIDs) {
+                if (line.contains(s)) {
+                    line = line.replaceAll(s, refFigWithSameNameDifferendID.get(s));
+                    solutionDoc.add(i, line);
+                    solutionDoc.remove(i + 1);
+                }
+            }
+
+        }
+    }
+
+    private void changeRelIDsInDoc() {
+
+        for (int i = 0; i < solutionDoc.size(); i++) {
+            String line = solutionDoc.get(i);
+            for (String s : refRelWithSameNameIDs) {
+                if (line.contains(s)) {
+                    line = line.replaceAll(s, refRelWithSameNameDifferendID.get(s));
+
+                    solutionDoc.add(i, line);
+                    solutionDoc.remove(i + 1);
+                }
+            }
+
+        }
     }
 
     /**
@@ -826,10 +879,10 @@ public class XMLFileReader {
      * @param solution
      */
     //Nur sources n childs nötig
-    private void printSolutionToFile(ArrayList<String> solution) {
+    private void printSolutionToFile() {
         try {
             BufferedWriter bw = new BufferedWriter(new FileWriter("solution.archimate"));
-            for (String s : solution) {
+            for (String s : solutionDoc) {
                 bw.write(s);
                 bw.newLine();
             }
@@ -837,6 +890,28 @@ public class XMLFileReader {
             bw.close();
         } catch (IOException ex) {
             Logger.getLogger(XMLFileReader.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void findDifferendIDsforFiguresSameName() {
+        for (Figure fr : refFig) {
+            for (Figure fi : instFig) {
+                if (fr.getName().equals(fi.getName()) && fr.getFolder().equals(fi.getFolder()) && fr.getType().equals(fi.getType()) && !fr.getId().equals(fi.getId())) {
+                    refFigWithSameNameDifferendID.put(fr.getId(), fi.getId());
+                    refFigWithSameNameIDs.add(fr.getId());
+                }
+            }
+        }
+    }
+
+    private void findDifferendIDsforRelastionsSameName() {
+        for (Relation rr : refRel) {
+            for (Relation ri : instRel) {
+                if (rr.getSource().equals(ri.getSource()) && rr.getTarget().equals(ri.getTarget()) && rr.getType().equals(ri.getType()) && !rr.getId().equals(ri.getId())) {
+                    refRelWithSameNameDifferendID.put(rr.getId(), ri.getId());
+                    refRelWithSameNameIDs.add(rr.getId());
+                }
+            }
         }
     }
 
@@ -850,7 +925,9 @@ public class XMLFileReader {
     public ArrayList<String> buildSolution() {
 
         //Zu beginn wird zunächst das solutionDoc auf das InstDoc gesetzt und mit Informationen angereichert
-        ArrayList<String> solutionDoc = instDoc;
+        for (String s : instDoc) {
+            solutionDoc.add(s);
+        }
 
         //Als ersten Schritte Alle Folder Tags richtig Setzen, dazu gehört das einerseits die Folder welche in Ref aber nicht in Inst vorhanden sind 
         //einzufügen aber auch zu sehen ob ein Folder in Ref Elemente Besitzt aber in Inst nicht, dann muss dieser Folder nicht direkt geschlossen werden, sondern ein Folder Ende Tag eingefügt werden.

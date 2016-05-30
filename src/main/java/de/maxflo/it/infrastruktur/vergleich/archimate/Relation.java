@@ -123,14 +123,21 @@ public class Relation {
         return true;
     }
 
+  
+
+    @Override
+    public String toString() {
+        return "Relation{" + "type=" + type + ", id=" + id + ", name=" + name + ", source=" + source + ", target=" + target + ", folder=" + folder + ", line=" + line + '}';
+    }
+
+ 
+
+   
+
     
     
 
-   
-    @Override
-    public String toString() {
-        return "Relation{" + "type=" + type + ", id=" + id + ", name=" + name + ", source=" + source + ", target=" + target + ", folder=" + folder + '}';
-    }
+  
     
     
   
