@@ -7,11 +7,13 @@ package de.maxflo.it.infrastruktur.vergleich.archimate;
 
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
- *
- * @author Max
+ * @author 
+ * 
+ * Florian Neuner
+ * Maximilian Haag
+ *    
  */
 public class Figure {
 

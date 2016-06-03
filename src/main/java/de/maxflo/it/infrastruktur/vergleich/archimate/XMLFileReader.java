@@ -14,16 +14,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
- * @author fnmh
+ * @author 
+ * 
+ * Florian Neuner
+ * Maximilian Haag
+ *    
  */
 public class XMLFileReader {
 
@@ -236,10 +237,6 @@ public class XMLFileReader {
 
     /**
      *
-     * DEBUG_UPDATE (MAX) 06.05.2016: ViewElement bzw. "name" nach Views NULL.
-     * Sollte aber auch so gehen da wir die ja nicht brauchen...
-     *
-     * Reads all Childs from xml Archimate List
      *
      * @param docList StingArray from Archimate XML List
      * @param listType Typ REF or INST, REF writes the allRefChilds and INST the
@@ -1119,11 +1116,6 @@ public class XMLFileReader {
             }
         }
 
-        //TODO
-        //MAX: 06.05.2016
-        //Wenn zN lineColor gar nicht vorhanden addet er beides...
-        //Wir nehmen bereits die INST Doc und fügen noch alles dazu
-        //Er macht auch nicht immer ein neues CHild .....to be done
         //Fügt alle Childs in die Solution Doc hinzu welche den Figures zugrunde liegen, die nur in Ref aber nicht in Inst sind.
         ArrayList<String> listOfChildIDwichAddedToSolution = new ArrayList<>();
 
@@ -1293,17 +1285,6 @@ public class XMLFileReader {
 
         //debugPrint(allRefChilds);
         return solutionDoc;
-    }
-
-    private void debugPrint(ArrayList<?> toPrintList) {
-        for (int i = 0; i < toPrintList.size(); i++) {
-            String oneLine = toPrintList.get(i).toString();
-            //
-            if (oneLine.contains(".............")) {
-                System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXX");
-            }
-            System.out.println(toPrintList.get(i));
-        }
     }
 
     /**

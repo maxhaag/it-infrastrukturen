@@ -10,8 +10,11 @@ import java.io.File;
 import javax.swing.JFileChooser;
 
 /**
- *
- * @author Max
+ * @author 
+ * 
+ * Florian Neuner
+ * Maximilian Haag
+ *    
  */
 public class GuiWindow extends javax.swing.JFrame {
 
@@ -168,7 +171,7 @@ public class GuiWindow extends javax.swing.JFrame {
 
     private void startBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startBActionPerformed
         if (!refLabel.getText().equals("<<Referenzdatei auswählen>>") && !instLabel.getText().equals("<<Instanzdatei auswählen>>")) {
-            readyLabel.setText("Vergleich gespeichert in \"Vergleich.archimate\"");
+            readyLabel.setText("Vergleich gespeichert in \"solution.archimate\"");
             readyLabel.setForeground(new Color(0,150,0));
 
             //TODO hier restliche Methoden aufrufen....

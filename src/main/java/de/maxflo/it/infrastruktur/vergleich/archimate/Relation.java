@@ -8,8 +8,11 @@ package de.maxflo.it.infrastruktur.vergleich.archimate;
 import java.util.Objects;
 
 /**
- *
- * @author Max
+ * @author 
+ * 
+ * Florian Neuner
+ * Maximilian Haag
+ *    
  */
 public class Relation {
     

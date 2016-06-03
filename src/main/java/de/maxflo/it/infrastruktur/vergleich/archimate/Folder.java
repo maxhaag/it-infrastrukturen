@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 /**
- *
- * @author fn
+ * @author 
+ * 
+ * Florian Neuner
+ * Maximilian Haag
+ *    
  */
 public class Folder {
     
@@ -94,11 +97,6 @@ public class Folder {
         return true;
     }
 
-    
-
-    
-
-   
 
     @Override
     public String toString() {
