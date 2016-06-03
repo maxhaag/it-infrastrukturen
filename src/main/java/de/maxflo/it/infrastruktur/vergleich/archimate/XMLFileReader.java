@@ -20,11 +20,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author 
- * 
- * Florian Neuner
- * Maximilian Haag
- *    
+ * @author
+ *
+ * Florian Neuner Maximilian Haag
+ *
  */
 public class XMLFileReader {
 
@@ -79,7 +78,7 @@ public class XMLFileReader {
     private ArrayList<ViewElement> ref_viewelement_changes = new ArrayList<>();
 
     //Benötigt für GUI Elemente
-    private static final boolean startGui = false;
+    private static final boolean startGui = true;
     //private String refFileStr = "Archisurance_BusinessCorpV_Mod-CustInfoServ.archimate";
     //private String instFileStr = "Archisurance_BusinessCorpV_Mod-ClaimRegServ.archimate";
 
@@ -96,21 +95,28 @@ public class XMLFileReader {
             GuiWindow gui = new GuiWindow(fReader);
             gui.setVisible(true);
         }
-
+        
         //Später von GUI aus aufrufen...
+        //done^^
+    }
+
+    /**
+     * Launch for GUI usage
+     */
+    public void guiLaunch() {
         logger.info("Start Reading Files");
-        fReader.readFiles();
+        readFiles();
         logger.info("Ref und Inst File wurde gelesen");
 
-        fReader.changeIDs();
-        fReader.parseFigures();
+        changeIDs();
+        parseFigures();
 
-        fReader.checkChanges();
-        fReader.buildSolution();
+        checkChanges();
+        buildSolution();
 
-        fReader.changeFigIDsInDoc();
-        fReader.changeRelIDsInDoc();
-        fReader.printSolutionToFile();
+        changeFigIDsInDoc();
+        changeRelIDsInDoc();
+        printSolutionToFile();
     }
 
     /**

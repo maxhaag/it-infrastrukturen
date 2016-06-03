@@ -175,7 +175,7 @@ public class GuiWindow extends javax.swing.JFrame {
             readyLabel.setForeground(new Color(0,150,0));
 
             //TODO hier restliche Methoden aufrufen....
-
+            reader.guiLaunch();
             
             
         } else {
